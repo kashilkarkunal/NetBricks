@@ -26,10 +26,13 @@ where
     for port in &ports {
         println!("Receiving port {}", port);
     }
+    let batch = ReceiveBatch::new(port.clone());
 
     let pipelines: Vec<_> = ports
         .iter()
-        .map(|port| macswap(ReceiveBatch::new(port.clone())).send(port.clone()))
+        .map(|port|{ let batch = ReceiveBatch::new(port.clone());
+            println!("Batch size : {}", batch.parent.array.len());
+            macswap(batch).send(port.clone()) })
         .collect();
     println!("Running {} pipelines", pipelines.len());
     for pipeline in pipelines {

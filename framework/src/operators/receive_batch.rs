@@ -7,7 +7,7 @@ use headers::NullHeader;
 use interface::{PacketRx, PacketTx};
 
 pub struct ReceiveBatch<T: PacketRx> {
-    parent: PacketBatch,
+    pub parent: PacketBatch,
     queue: T,
     pub received: u64,
 }

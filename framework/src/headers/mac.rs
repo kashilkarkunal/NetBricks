@@ -126,6 +126,7 @@ impl MacHeader {
         Default::default()
     }
 
+
     #[inline]
     pub fn etype(&self) -> u16 {
         u16::from_be(self.etype)
