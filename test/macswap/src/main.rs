@@ -27,7 +27,6 @@ where
     for port in &ports {
         println!("Receiving port {}", port);
     }
-    let batch = ReceiveBatch::new(port.clone());
 
     let pipelines: Vec<_> = ports
         .iter()
