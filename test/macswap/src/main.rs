@@ -16,6 +16,7 @@ use std::process;
 use std::sync::Arc;
 use std::thread;
 use std::time::Duration;
+use time::PreciseTime;
 mod nf;
 
 fn test<T, S>(ports: Vec<T>, sched: &mut S)
@@ -66,9 +67,12 @@ fn main() {
 
     match initialize_system(&configuration) {
         Ok(mut context) => {
+            let start = PreciseTime::now();
             context.start_schedulers();
 
             context.add_pipeline_to_run(Arc::new(move |p, s: &mut StandaloneScheduler| test(p, s)));
+            let end = PreciseTime::now();
+            println!("initialize - {} seconds", start.to(end));
             context.execute();
 
             if test_duration != 0 {
