@@ -20,6 +20,7 @@ where
     F: FnMut(),
 {
     fn execute(&mut self) {
+        print!("Executing task");
         (*self)()
     }
 
