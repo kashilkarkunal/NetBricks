@@ -125,17 +125,19 @@ impl StandaloneScheduler {
 
     #[inline]
     fn execute_internal(&mut self, begin: u64) -> u64 {
+        let len = self.run_q.len();
+        let next = self.next_task + 1;
         let time = {
             let task = &mut (&mut self.run_q[self.next_task]);
             task.task.execute();
             let end = utils::rdtsc_unsafe();
             task.cycles += end - begin;
-            println!("standalone - {:?} cycles", end - begin);
+            if next != len {
+                println!("standalone - {:?} cycles", end - begin);
+            }
             task.last_run = end;
             end
         };
-        let len = self.run_q.len();
-        let next = self.next_task + 1;
         if next == len {
             self.next_task = 0;
             if let Ok(cmd) = self.sched_channel.try_recv() {
