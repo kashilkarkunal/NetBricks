@@ -130,6 +130,7 @@ impl StandaloneScheduler {
             task.task.execute();
             let end = utils::rdtsc_unsafe();
             task.cycles += end - begin;
+            println!("standalone - {:?} cycles", task.cycles);
             task.last_run = end;
             end
         };
