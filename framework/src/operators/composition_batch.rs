@@ -49,6 +49,8 @@ impl Act for CompositionBatch {
 impl Executable for CompositionBatch {
     #[inline]
     fn execute(&mut self) {
+
+        print!("Executing task in composition_batch.rs");
         self.act();
         self.done();
     }

@@ -41,6 +41,8 @@ where
 {
     #[inline]
     fn execute(&mut self) {
+
+        print!("Executing task in group_by.rs");
         self.parent.act(); // Let the parent get some packets.
         {
             let iter = PayloadEnumerator::<T, V::Metadata>::new(&mut self.parent);

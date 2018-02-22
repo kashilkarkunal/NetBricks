@@ -100,6 +100,8 @@ impl<T: Batch> Act for MergeBatch<T> {
 impl<T: Batch> Executable for MergeBatch<T> {
     #[inline]
     fn execute(&mut self) {
+
+        print!("Executing task in merge.rs");
         self.act();
         self.done();
     }
