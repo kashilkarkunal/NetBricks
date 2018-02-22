@@ -30,7 +30,7 @@ where
 
     let pipelines: Vec<_> = ports
         .iter()
-        .map(|port|{ let batch = ReceiveBatch::new(port.clone());
+        .map(|port|{ let batch = ReceiveBatch::new_with_parent(PacketBatch::new(500),port.clone());
             println!("Batch size : {}", batch.parent.array.len());
             macswap(batch).send(port.clone()) })
         .collect();
