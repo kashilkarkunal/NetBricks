@@ -56,7 +56,7 @@ fn main() {
         Err(f) => panic!(f.to_string()),
     };
     let mut configuration = read_matches(&matches, &opts);
-    configuration.pool_size = 511;
+    configuration.pool_size = 450;
 
     let test_duration: u64 = matches
         .opt_str("dur")
