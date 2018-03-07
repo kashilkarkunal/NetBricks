@@ -6,9 +6,8 @@
 typedef struct _packet_{
     char src_address[6];
     char dst_address[6];
-    char data[300];
+    char data[6];
 } packet;
-
 
 packet create_packet() {
     packet p;
@@ -49,14 +48,11 @@ __global__ void VecAdd(packet *A, int n) {
 }
 
 extern "C" {
-void garble_packet() {
+void garble_packet(packet packets[], int num) {
 
-    packet packets[100];
-    for(int i = 0; i < 100; i+=1) {
-        packets[i] = create_packet();
-    }
 
-    int size = 100*sizeof(packet);
+    printf("Starting Cuda Program %d \n", num);
+    int size = num*sizeof(packet);
 
     packet *a;
     cudaMalloc((void **)&a, size);
@@ -64,13 +60,14 @@ void garble_packet() {
     cudaMemcpy(a, packets, size, cudaMemcpyHostToDevice);
     cudaThreadSynchronize();
 
-    VecAdd<<<10, 10>>> (a, 100);
+    VecAdd<<<num/10, 10>>> (a, num);
 
     cudaThreadSynchronize();
     cudaMemcpy(packets, a, size, cudaMemcpyDeviceToHost);
     cudaFree(a);
 
-    for(int i = 0; i < 100; i+=1) 
+    for(int i = 0; i < num; i+=1) 
         printf("%s : %s \n", packets[i].src_address, packets[i].dst_address);
 }
 }
+

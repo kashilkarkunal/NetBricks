@@ -153,9 +153,9 @@ impl<T: EndOffset, M: Sized + Send> Packet<T, M> {
 
     #[inline]
     fn execute_gpu_nf(packets: &mut Vec<Packet<T, M>>) {
-        let mut mbuf_vector : Vec<* mut MBuf> = Vec::new();
+        let mut mbuf_vector : Vec<_> = Vec::new();
         for packet in packets {
-            mbuf_vector.push(&mut packet.mbuf);
+            mbuf_vector.push(packet.mbuf);
         }
         MBuf::execute_gpu_nf(mbuf_vector);
     }

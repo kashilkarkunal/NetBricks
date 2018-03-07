@@ -47,7 +47,7 @@ where
         if !self.applied {
             self.parent.act();
             {
-                let mut gpu_batch : Vec<Packet<T, M>> = Vec::new();
+                let mut gpu_batch : Vec<&mut Packet<T, V::Metadata>> = Vec::new();
                 let iter = PayloadEnumerator::<T, V::Metadata>::new(&mut self.parent);
                 while let Some(ParsedDescriptor { mut packet, .. }) = iter.next(&mut self.parent) {
                     gpu_batch.push(&mut packet);

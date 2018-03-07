@@ -48,7 +48,7 @@ pub struct StandaloneScheduler {
 pub enum SchedulerCommand {
     Add(Box<Executable + Send>),
     Run(Arc<Fn(&mut StandaloneScheduler) + Send + Sync>),
-    Execute(GpuKernel<bool>),
+    Execute(bool),
     Shutdown,
     Handshake(SyncSender<bool>),
 }
@@ -163,7 +163,7 @@ impl StandaloneScheduler {
 
     pub fn execute_one(&mut self) {
         if !self.run_q.is_empty() {
-            self.execute_internal(utils::rdtsc_unsafe());
+            self.execute_internal(utils::rdtsc_unsafe(), false);
         }
     }
 }

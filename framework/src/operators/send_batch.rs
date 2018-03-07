@@ -131,7 +131,7 @@ where
 impl<Port, V> Executable for SendBatch<Port, V>
 where
     Port: PacketTx,
-    V: Batch + BatchIterator + Act,
+    V: Batch + BatchIterator + Act + GpuNf,
 {
     #[inline]
     fn execute(&mut self) {
