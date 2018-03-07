@@ -1,4 +1,5 @@
 use super::Batch;
+use super::gpunf::GpuNf;
 use super::act::Act;
 use super::iterator::*;
 use super::packet_batch::PacketBatch;
@@ -13,7 +14,7 @@ pub type MapFn<T, M> = Box<FnMut(&Packet<T, M>) + Send>;
 pub struct MapBatch<T, V>
 where
     T: EndOffset,
-    V: Batch + BatchIterator<Header = T> + Act,
+    V: Batch + BatchIterator<Header = T> + Act + GpuNf,
 {
     parent: V,
     transformer: MapFn<T, V::Metadata>,
@@ -24,7 +25,7 @@ where
 impl<T, V> MapBatch<T, V>
 where
     T: EndOffset,
-    V: Batch + BatchIterator<Header = T> + Act,
+    V: Batch + BatchIterator<Header = T> + Act + GpuNf,
 {
     pub fn new(parent: V, transformer: MapFn<T, V::Metadata>) -> MapBatch<T, V> {
         MapBatch {
@@ -39,14 +40,14 @@ where
 impl<T, V> Batch for MapBatch<T, V>
 where
     T: EndOffset,
-    V: Batch + BatchIterator<Header = T> + Act,
+    V: Batch + BatchIterator<Header = T> + Act + GpuNf,
 {
 }
 
 impl<T, V> Act for MapBatch<T, V>
 where
     T: EndOffset,
-    V: Batch + BatchIterator<Header = T> + Act,
+    V: Batch + BatchIterator<Header = T> + Act + GpuNf,
 {
     #[inline]
     fn act(&mut self) {
@@ -99,10 +100,19 @@ where
     }
 }
 
+impl <T, V> GpuNf for MapBatch<T, V>
+where
+    T: EndOffset,
+    V: Batch + BatchIterator<Header = T> + Act + GpuNf,
+{
+    fn execute_gpu_nfv(&mut self) {
+        unimplemented!()
+    }
+}
 impl<T, V> BatchIterator for MapBatch<T, V>
 where
     T: EndOffset,
-    V: Batch + BatchIterator<Header = T> + Act,
+    V: Batch + BatchIterator<Header = T> + Act + GpuNf,
 {
     type Header = T;
     type Metadata = <V as BatchIterator>::Metadata;

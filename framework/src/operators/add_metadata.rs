@@ -1,4 +1,5 @@
 use super::Batch;
+use super::gpunf::GpuNf;
 use super::act::Act;
 use super::iterator::*;
 use super::packet_batch::PacketBatch;
@@ -12,7 +13,7 @@ pub type MetadataFn<T, M, M2> = Box<FnMut(&Packet<T, M>) -> M2 + Send>;
 pub struct AddMetadataBatch<M, V>
 where
     M: Send + Sized,
-    V: Batch + BatchIterator + Act,
+    V: Batch + BatchIterator + Act + GpuNf,
 {
     parent: V,
     generator: MetadataFn<V::Header, V::Metadata, M>,
@@ -23,7 +24,7 @@ where
 impl<M, V> AddMetadataBatch<M, V>
 where
     M: Send + Sized,
-    V: Batch + BatchIterator + Act,
+    V: Batch + BatchIterator + Act + GpuNf,
 {
     pub fn new(parent: V, generator: MetadataFn<V::Header, V::Metadata, M>) -> AddMetadataBatch<M, V> {
         AddMetadataBatch {
@@ -38,14 +39,14 @@ where
 impl<M, V> Batch for AddMetadataBatch<M, V>
 where
     M: Send + Sized,
-    V: Batch + BatchIterator + Act,
+    V: Batch + BatchIterator + Act + GpuNf,
 {
 }
 
 impl<M, V> BatchIterator for AddMetadataBatch<M, V>
 where
     M: Send + Sized,
-    V: Batch + BatchIterator + Act,
+    V: Batch + BatchIterator + Act + GpuNf,
 {
     type Header = V::Header;
     type Metadata = M;
@@ -63,10 +64,20 @@ where
     }
 }
 
+impl <M, V> GpuNf for AddMetadataBatch<M, V>
+where
+    M: Send + Sized,
+    V: Batch + BatchIterator + Act + GpuNf,
+{
+    fn execute_gpu_nfv(&mut self) {
+        unimplemented!()
+    }
+}
+
 impl<M, V> Act for AddMetadataBatch<M, V>
 where
     M: Send + Sized,
-    V: Batch + BatchIterator + Act,
+    V: Batch + BatchIterator + Act + GpuNf,
 {
     #[inline]
     fn act(&mut self) {

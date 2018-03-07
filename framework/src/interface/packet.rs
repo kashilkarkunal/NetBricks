@@ -95,6 +95,14 @@ pub fn new_packet() -> Option<Packet<NullHeader, EmptyMetadata>> {
     }
 }
 
+pub fn execute_gpu_nf(packets: &mut Vec<Packet<T, M>>) {
+    let mut mbuf_vector : Vec<_> = Vec::new();
+    for packet in packets {
+        mbuf_vector.push(packet.mbuf);
+    }
+    MBuf::execute_gpu_nf(mbuf_vector);
+}
+
 /// Allocate an array of packets.
 pub fn new_packet_array(count: usize) -> Vec<Packet<NullHeader, EmptyMetadata>> {
     let mut array = Vec::with_capacity(count);
@@ -151,14 +159,6 @@ impl<T: EndOffset, M: Sized + Send> Packet<T, M> {
 
     // -----------------Common code ------------------------------------------------------------------------
 
-    #[inline]
-    fn execute_gpu_nf(packets: &mut Vec<Packet<T, M>>) {
-        let mut mbuf_vector : Vec<_> = Vec::new();
-        for packet in packets {
-            mbuf_vector.push(packet.mbuf);
-        }
-        MBuf::execute_gpu_nf(mbuf_vector);
-    }
     #[inline]
     fn read_stack_depth(&self) -> usize {
         MBuf::read_metadata_slot(self.mbuf, STACK_DEPTH_SLOT)

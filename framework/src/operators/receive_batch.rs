@@ -1,4 +1,5 @@
 use super::Batch;
+use super::gpunf::GpuNf;
 use super::act::Act;
 use super::iterator::*;
 use super::packet_batch::PacketBatch;
@@ -27,6 +28,12 @@ impl<T: PacketRx> ReceiveBatch<T> {
             queue: queue,
             received: 0,
         }
+    }
+}
+
+impl <T: PacketRx> GpuNf for ReceiveBatch<T> {
+    fn execute_gpu_nfv(&mut self) {
+        unimplemented!()
     }
 }
 

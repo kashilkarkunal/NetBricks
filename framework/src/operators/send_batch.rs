@@ -11,7 +11,7 @@ use scheduler::Executable;
 pub struct SendBatch<Port, V>
 where
     Port: PacketTx,
-    V: Batch + BatchIterator + Act,
+    V: Batch + BatchIterator + Act + GpuNf,
 {
     port: Port,
     parent: V,
@@ -21,7 +21,7 @@ where
 impl<Port, V> SendBatch<Port, V>
 where
     Port: PacketTx,
-    V: Batch + BatchIterator + Act,
+    V: Batch + BatchIterator + Act + GpuNf,
 {
     pub fn new(parent: V, port: Port) -> SendBatch<Port, V> {
         SendBatch {
@@ -35,14 +35,14 @@ where
 impl<Port, V> Batch for SendBatch<Port, V>
 where
     Port: PacketTx,
-    V: Batch + BatchIterator + Act,
+    V: Batch + BatchIterator + Act + GpuNf,
 {
 }
 
 impl<Port, V> BatchIterator for SendBatch<Port, V>
 where
     Port: PacketTx,
-    V: Batch + BatchIterator + Act,
+    V: Batch + BatchIterator + Act + GpuNf,
 {
     type Header = NullHeader;
     type Metadata = EmptyMetadata;
@@ -61,7 +61,7 @@ where
 impl<Port, V> Act for SendBatch<Port, V>
 where
     Port: PacketTx,
-    V: Batch + BatchIterator + Act,
+    V: Batch + BatchIterator + Act + GpuNf,
 {
     #[inline]
     fn act(&mut self) {

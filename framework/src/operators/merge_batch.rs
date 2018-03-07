@@ -1,4 +1,5 @@
 use super::Batch;
+use super::gpunf::GpuNf;
 use super::act::Act;
 use super::iterator::{BatchIterator, PacketDescriptor};
 use super::packet_batch::PacketBatch;
@@ -38,6 +39,11 @@ impl<T: Batch> BatchIterator for MergeBatch<T> {
     }
 }
 
+impl <T: Batch> GpuNf for MergeBatch<T> {
+    fn execute_gpu_nfv(&mut self) {
+        unimplemented!()
+    }
+}
 /// Internal interface for packets.
 impl<T: Batch> Act for MergeBatch<T> {
     #[inline]
