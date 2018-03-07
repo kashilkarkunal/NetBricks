@@ -18,6 +18,9 @@ impl Executable for DepTask {
     fn dependencies(&mut self) -> Vec<usize> {
         self.deps.clone()
     }
+    fn execute_gpu_kernel(&mut self) {
+        unimplemented!()
+    }
 }
 impl DepTask {
     pub fn new(parent: usize, id: &str) -> DepTask {

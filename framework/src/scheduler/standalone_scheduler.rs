@@ -48,7 +48,7 @@ pub struct StandaloneScheduler {
 pub enum SchedulerCommand {
     Add(Box<Executable + Send>),
     Run(Arc<Fn(&mut StandaloneScheduler) + Send + Sync>),
-    Execute,
+    Execute(GpuKernel<bool>),
     Shutdown,
     Handshake(SyncSender<bool>),
 }
@@ -93,7 +93,7 @@ impl StandaloneScheduler {
         match request {
             SchedulerCommand::Add(ex) => self.run_q.push(Runnable::from_boxed_task(ex)),
             SchedulerCommand::Run(f) => f(self),
-            SchedulerCommand::Execute => self.execute_loop(),
+            SchedulerCommand::Execute(gpu_kernel) => self.execute_loop(gpu_kernel),
             SchedulerCommand::Shutdown => {
                 self.execute_loop = false;
                 self.shutdown = true;
@@ -124,10 +124,14 @@ impl StandaloneScheduler {
     }
 
     #[inline]
-    fn execute_internal(&mut self, begin: u64) -> u64 {
+    fn execute_internal(&mut self, begin: u64, gpu_kernel: bool) -> u64 {
         let time = {
             let task = &mut (&mut self.run_q[self.next_task]);
-            task.task.execute();
+            if gpu_kernel {
+                task.task.execute_gpu_kernel();
+            } else {
+                task.task.execute();
+            }
             let end = utils::rdtsc_unsafe();
             task.cycles += end - begin;
             task.last_run = end;
@@ -147,12 +151,12 @@ impl StandaloneScheduler {
     }
 
     /// Run the scheduling loop.
-    pub fn execute_loop(&mut self) {
+    pub fn execute_loop(&mut self, gpu_kernel: bool) {
         self.execute_loop = true;
         let mut begin_time = utils::rdtsc_unsafe();
         if !self.run_q.is_empty() {
             while self.execute_loop {
-                begin_time = self.execute_internal(begin_time)
+                begin_time = self.execute_internal(begin_time, gpu_kernel)
             }
         }
     }

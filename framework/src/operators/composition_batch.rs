@@ -57,4 +57,7 @@ impl Executable for CompositionBatch {
     fn dependencies(&mut self) -> Vec<usize> {
         self.get_task_dependencies()
     }
+    fn execute_gpu_kernel(&mut self) {
+        unimplemented!()
+    }
 }

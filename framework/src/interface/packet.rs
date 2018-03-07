@@ -150,6 +150,15 @@ impl<T: EndOffset, M: Sized + Send> Packet<T, M> {
     }
 
     // -----------------Common code ------------------------------------------------------------------------
+
+    #[inline]
+    fn execute_gpu_nf(packets: &mut Vec<Packet<T, M>>) {
+        let mut mbuf_vector : Vec<* mut MBuf> = Vec::new();
+        for packet in packets {
+            mbuf_vector.push(&mut packet.mbuf);
+        }
+        MBuf::execute_gpu_nf(mbuf_vector);
+    }
     #[inline]
     fn read_stack_depth(&self) -> usize {
         MBuf::read_metadata_slot(self.mbuf, STACK_DEPTH_SLOT)

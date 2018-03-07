@@ -13,6 +13,7 @@ mod context;
 pub trait Executable {
     fn execute(&mut self);
     fn dependencies(&mut self) -> Vec<usize>;
+    fn execute_gpu_kernel(&mut self);
 }
 
 impl<F> Executable for F
@@ -26,6 +27,8 @@ where
     fn dependencies(&mut self) -> Vec<usize> {
         vec![]
     }
+
+    fn execute_gpu_kernel(&mut self) {}
 }
 
 pub trait Scheduler {

@@ -59,4 +59,7 @@ impl Executable for PacketCreator {
     fn dependencies(&mut self) -> Vec<usize> {
         vec![]
     }
+    fn execute_gpu_kernel(&mut self) {
+        unimplemented!()
+    }
 }

@@ -1,5 +1,6 @@
 use super::Batch;
 use super::act::Act;
+use super::gpunf::GpuNf;
 use super::iterator::*;
 use super::packet_batch::PacketBatch;
 use common::*;
@@ -32,6 +33,27 @@ where
             transformer: transformer,
             applied: false,
             phantom_t: PhantomData,
+        }
+    }
+}
+
+impl <T, V> GpuNf for TransformBatch<T, V>
+where
+    T: EndOffset,
+    V: Batch + BatchIterator<Header = T> + Act,
+{
+
+    fn execute_gpu_nfv(&mut self) {
+        if !self.applied {
+            self.parent.act();
+            {
+                let mut gpu_batch : Vec<Packet<T, M>> = Vec::new();
+                let iter = PayloadEnumerator::<T, V::Metadata>::new(&mut self.parent);
+                while let Some(ParsedDescriptor { mut packet, .. }) = iter.next(&mut self.parent) {
+                    gpu_batch.push(&mut packet);
+                }
+            }
+            self.applied = true;
         }
     }
 }

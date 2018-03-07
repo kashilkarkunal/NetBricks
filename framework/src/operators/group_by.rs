@@ -58,6 +58,9 @@ where
     fn dependencies(&mut self) -> Vec<usize> {
         self.parent.get_task_dependencies()
     }
+    fn execute_gpu_kernel(&mut self) {
+        unimplemented!()
+    }
 }
 
 #[cfg_attr(feature = "dev", allow(len_without_is_empty))]

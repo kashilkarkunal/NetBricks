@@ -36,6 +36,9 @@ impl<T: SctpControlAgent> Executable for SctpControlServer<T> {
     fn dependencies(&mut self) -> Vec<usize> {
         vec![]
     }
+    fn execute_gpu_kernel(&mut self) {
+        unimplemented!()
+    }
 }
 
 // FIXME: Add one-to-many SCTP support?

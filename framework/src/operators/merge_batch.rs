@@ -108,4 +108,9 @@ impl<T: Batch> Executable for MergeBatch<T> {
     fn dependencies(&mut self) -> Vec<usize> {
         self.get_task_dependencies()
     }
+
+    #[inline]
+    fn execute_gpu_kernel(&mut self) {
+        unimplemented!()
+    }
 }

@@ -36,6 +36,9 @@ impl<T: TcpControlAgent> Executable for TcpControlServer<T> {
     fn dependencies(&mut self) -> Vec<usize> {
         vec![]
     }
+    fn execute_gpu_kernel(&mut self) {
+        unimplemented!()
+    }
 }
 
 impl<T: TcpControlAgent> TcpControlServer<T> {

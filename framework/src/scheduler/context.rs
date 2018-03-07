@@ -152,10 +152,16 @@ impl NetBricksContext {
         }
     }
 
+    pub fn execute_gpu_kernel(&mut self) {
+        for (core, channel) in &self.scheduler_channels {
+            channel.send(SchedulerCommand::Execute(true)).unwrap();
+            println!("Starting scheduler on {}", core);
+        }
+    }
     /// Start scheduling pipelines.
     pub fn execute(&mut self) {
         for (core, channel) in &self.scheduler_channels {
-            channel.send(SchedulerCommand::Execute).unwrap();
+            channel.send(SchedulerCommand::Execute(false)).unwrap();
             println!("Starting scheduler on {}", core);
         }
     }

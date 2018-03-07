@@ -1,3 +1,8 @@
+#[link(name = "gpu")]
+extern {
+   fn swap_mac_address(mbuf_vector: *mut MBuf, buffer_size: i32);
+}
+
 #[repr(C)]
 pub struct MBuf {
     buf_addr: *mut u8,
@@ -33,6 +38,13 @@ impl MBuf {
             let ptr = (mbuf.offset(1) as *mut usize).offset(slot as isize);
             *ptr
         }
+    }
+
+    #[inline]
+    pub fn execute_gpu_nf(mbuf_vector: Vec<*mut MBuf>) {
+       unsafe {
+
+       }
     }
 
     #[inline]

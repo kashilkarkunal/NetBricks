@@ -1,5 +1,6 @@
 use super::Batch;
 use super::act::Act;
+use super::gpunf::GpuNf;
 use super::iterator::*;
 use super::packet_batch::PacketBatch;
 use common::*;
@@ -108,6 +109,25 @@ where
     }
 }
 
+impl<Port, V> GpuNf for SendBatch<Port, V>
+where
+    Port: PacketTx,
+    V: Batch + BatchIterator + Act + GpuNf,
+{
+    fn execute_gpu_nfv(&mut self) {
+        self.parent.execute_gpu_nfv();
+        self.parent
+            .get_packet_batch()
+            .send_q(&self.port)
+            .and_then(|x| {
+                self.sent += x as u64;
+                Ok(x)
+            })
+            .expect("Send failed");
+        self.parent.done();
+    }
+}
+
 impl<Port, V> Executable for SendBatch<Port, V>
 where
     Port: PacketTx,
@@ -121,5 +141,9 @@ where
     #[inline]
     fn dependencies(&mut self) -> Vec<usize> {
         self.get_task_dependencies()
+    }
+
+    fn execute_gpu_kernel(&mut self) {
+        self.execute_gpu_nfv();
     }
 }
