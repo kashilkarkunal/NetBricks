@@ -1,5 +1,4 @@
 use super::Batch;
-use super::gpunf::GpuNf;
 use super::act::Act;
 use super::iterator::*;
 use super::packet_batch::PacketBatch;
@@ -13,7 +12,7 @@ pub type FilterFn<T, M> = Box<FnMut(&Packet<T, M>) -> bool + Send>;
 pub struct FilterBatch<T, V>
 where
     T: EndOffset,
-    V: Batch + BatchIterator<Header = T> + Act + GpuNf,
+    V: Batch + BatchIterator<Header = T> + Act,
 {
     parent: V,
     filter: FilterFn<T, V::Metadata>,
@@ -24,7 +23,7 @@ where
 impl<T, V> FilterBatch<T, V>
 where
     T: EndOffset,
-    V: Batch + BatchIterator<Header = T> + Act + GpuNf,
+    V: Batch + BatchIterator<Header = T> + Act,
 {
     #[inline]
     pub fn new(parent: V, filter: FilterFn<T, V::Metadata>) -> FilterBatch<T, V> {
@@ -43,7 +42,7 @@ batch_no_new!{FilterBatch}
 impl<T, V> Act for FilterBatch<T, V>
 where
     T: EndOffset,
-    V: Batch + BatchIterator<Header = T> + Act + GpuNf,
+    V: Batch + BatchIterator<Header = T> + Act,
 {
     #[inline]
     fn act(&mut self) {
@@ -106,7 +105,7 @@ where
 impl<T, V> BatchIterator for FilterBatch<T, V>
 where
     T: EndOffset,
-    V: Batch + BatchIterator<Header = T> + Act + GpuNf,
+    V: Batch + BatchIterator<Header = T> + Act,
 {
     type Header = T;
     type Metadata = <V as BatchIterator>::Metadata;
@@ -121,11 +120,3 @@ where
         self.parent.next_payload(idx)
     }
 }
-
-impl <T, V> GpuNf for FilterBatch<T, V>
-{
-    fn execute_gpu_nfv(&mut self) {
-        unimplemented!()
-    }
-}
-

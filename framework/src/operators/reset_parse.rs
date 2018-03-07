@@ -1,6 +1,5 @@
 use super::Batch;
 use super::act::Act;
-use super::gpunf::GpuNf;
 use super::iterator::*;
 use super::packet_batch::PacketBatch;
 use common::*;
@@ -9,14 +8,14 @@ use interface::PacketTx;
 
 pub struct ResetParsingBatch<V>
 where
-    V: Batch + BatchIterator + Act + GpuNf,
+    V: Batch + BatchIterator + Act,
 {
     parent: V,
 }
 
 impl<V> ResetParsingBatch<V>
 where
-    V: Batch + BatchIterator + Act + GpuNf,
+    V: Batch + BatchIterator + Act,
 {
     pub fn new(parent: V) -> ResetParsingBatch<V> {
         ResetParsingBatch { parent: parent }
@@ -25,7 +24,7 @@ where
 
 impl<V> BatchIterator for ResetParsingBatch<V>
 where
-    V: Batch + BatchIterator + Act + GpuNf,
+    V: Batch + BatchIterator + Act,
 {
     type Header = NullHeader;
     type Metadata = EmptyMetadata;
@@ -48,22 +47,13 @@ where
 /// Internal interface for packets.
 impl<V> Act for ResetParsingBatch<V>
 where
-    V: Batch + BatchIterator + Act + GpuNf,
+    V: Batch + BatchIterator + Act,
 {
     act!{}
 }
 
-impl <V> GpuNf for ResetParsingBatch<V>
-where
-    V: Batch + BatchIterator + Act + GpuNf,
-{
-    fn execute_gpu_nfv(&mut self) {
-        unimplemented!()
-    }
-}
-
 impl<V> Batch for ResetParsingBatch<V>
 where
-    V: Batch + BatchIterator + Act + GpuNf,
+    V: Batch + BatchIterator + Act,
 {
 }

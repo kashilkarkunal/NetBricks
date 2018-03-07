@@ -1,5 +1,4 @@
 use super::Batch;
-use super::gpunf::GpuNf;
 use super::act::Act;
 use super::iterator::*;
 use super::packet_batch::PacketBatch;
@@ -12,7 +11,7 @@ pub struct RestoreHeader<T, M, V>
 where
     T: EndOffset + 'static,
     M: Sized + Send,
-    V: Batch + BatchIterator + Act + GpuNf,
+    V: Batch + BatchIterator + Act,
 {
     parent: V,
     _phantom_t: PhantomData<T>,
@@ -23,33 +22,22 @@ impl<T, M, V> Act for RestoreHeader<T, M, V>
 where
     T: EndOffset + 'static,
     M: Sized + Send,
-    V: Batch + BatchIterator + Act + GpuNf,
+    V: Batch + BatchIterator + Act,
 {
     act!{}
 }
 
 impl<T, M, V> Batch for RestoreHeader<T, M, V>
 where
-    V: Batch + BatchIterator + Act + GpuNf,
+    V: Batch + BatchIterator + Act,
     M: Sized + Send,
     T: EndOffset + 'static,
 {
-}
-
-impl <T, M, V> GpuNf for RestoreHeader<T, M, V>
-where
-    V: Batch + BatchIterator + Act + GpuNf,
-    M: Sized + Send,
-    T: EndOffset + 'static,
-{
-    fn execute_gpu_nfv(&mut self) {
-        unimplemented!()
-    }
 }
 
 impl<T, M, V> RestoreHeader<T, M, V>
 where
-    V: Batch + BatchIterator + Act + GpuNf,
+    V: Batch + BatchIterator + Act,
     M: Sized + Send,
     T: EndOffset + 'static,
 {
@@ -65,7 +53,7 @@ where
 
 impl<T, M, V> BatchIterator for RestoreHeader<T, M, V>
 where
-    V: Batch + BatchIterator + Act + GpuNf,
+    V: Batch + BatchIterator + Act,
     M: Sized + Send,
     T: EndOffset + 'static,
 {

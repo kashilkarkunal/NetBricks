@@ -1,5 +1,4 @@
 use super::Batch;
-use super::gpunf::GpuNf;
 use super::act::Act;
 use super::iterator::*;
 use super::packet_batch::PacketBatch;
@@ -13,7 +12,7 @@ pub type MutableMetadataFn<T, M, M2> = Box<FnMut(&mut Packet<T, M>) -> M2 + Send
 pub struct MutableAddMetadataBatch<M, V>
 where
     M: Send + Sized,
-    V: Batch + BatchIterator + Act + GpuNf,
+    V: Batch + BatchIterator + Act,
 {
     parent: V,
     generator: MutableMetadataFn<V::Header, V::Metadata, M>,
@@ -24,7 +23,7 @@ where
 impl<M, V> MutableAddMetadataBatch<M, V>
 where
     M: Send + Sized,
-    V: Batch + BatchIterator + Act + GpuNf,
+    V: Batch + BatchIterator + Act,
 {
     pub fn new(parent: V, generator: MutableMetadataFn<V::Header, V::Metadata, M>) -> MutableAddMetadataBatch<M, V> {
         MutableAddMetadataBatch {
@@ -39,14 +38,14 @@ where
 impl<M, V> Batch for MutableAddMetadataBatch<M, V>
 where
     M: Send + Sized,
-    V: Batch + BatchIterator + Act + GpuNf,
+    V: Batch + BatchIterator + Act,
 {
 }
 
 impl<M, V> BatchIterator for MutableAddMetadataBatch<M, V>
 where
     M: Send + Sized,
-    V: Batch + BatchIterator + Act + GpuNf,
+    V: Batch + BatchIterator + Act,
 {
     type Header = V::Header;
     type Metadata = M;
@@ -67,7 +66,7 @@ where
 impl<M, V> Act for MutableAddMetadataBatch<M, V>
 where
     M: Send + Sized,
-    V: Batch + BatchIterator + Act + GpuNf,
+    V: Batch + BatchIterator + Act,
 {
     #[inline]
     fn act(&mut self) {
@@ -118,15 +117,5 @@ where
     #[inline]
     fn get_task_dependencies(&self) -> Vec<usize> {
         self.parent.get_task_dependencies()
-    }
-}
-
-impl <M, V> GpuNf for MutableAddMetadataBatch<M, V>
-where
-    M: Send + Sized,
-    V: Batch + BatchIterator + Act + GpuNf,
-{
-    fn execute_gpu_nfv(&mut self) {
-        unimplemented!()
     }
 }

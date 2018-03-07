@@ -1,5 +1,4 @@
 use super::Batch;
-use super::gpunf::GpuNf;
 use super::act::Act;
 use super::iterator::{BatchIterator, PacketDescriptor};
 use common::*;
@@ -220,12 +219,6 @@ impl PacketBatch {
                 }
             }
         }
-    }
-}
-
-impl GpuNf for PacketBatch {
-    fn execute_gpu_nfv(&mut self) {
-        unimplemented!()
     }
 }
 

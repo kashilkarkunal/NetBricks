@@ -1,5 +1,4 @@
 use super::Batch;
-use super::gpunf::GpuNf;
 use super::act::Act;
 use super::iterator::{BatchIterator, PacketDescriptor};
 use super::packet_batch::PacketBatch;
@@ -27,12 +26,6 @@ impl CompositionBatch {
 
 impl Batch for CompositionBatch {}
 
-impl GpuNf for CompositionBatch {
-    fn execute_gpu_nfv(&mut self) {
-        unimplemented!()
-    }
-}
-
 impl BatchIterator for CompositionBatch {
     type Header = NullHeader;
     type Metadata = EmptyMetadata;
@@ -47,7 +40,6 @@ impl BatchIterator for CompositionBatch {
         self.parent.next_payload(idx)
     }
 }
-
 
 /// Internal interface for packets.
 impl Act for CompositionBatch {
