@@ -155,7 +155,7 @@ clean () {
         popd
     done
     make clean -C ${BASE_DIR}/native
-    rm -rf ${BASE_DIR}/target 
+    rm -rf ${BASE_DIR}/target
 }
 
 UNWIND_BUILD="${TOOLS_BASE}"/libunwind
@@ -277,7 +277,7 @@ case $TASK in
             echo "No Cargo.toml, not valid"
         fi
         pushd ${BASE_DIR}/test/${build_dir}
-            ${CARGO} build --release
+            ${CARGO} rustc --release -- -L . -L /usr/local/cuda/lib64 -l cudart -l stdc++
         popd
         ;;
     build_fmwk)

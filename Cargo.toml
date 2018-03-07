@@ -1,3 +1,6 @@
+[dependencies]
+libc = "0.2.0"
+
 [workspace]
 members=["framework",
         "test/framework-test",
