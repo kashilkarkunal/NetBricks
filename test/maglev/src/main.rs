@@ -49,7 +49,6 @@ fn main() {
         Err(f) => panic!(f.to_string()),
     };
     let configuration = read_matches(&matches, &opts);
-    configuration.pool_size = 450;
 
     match initialize_system(&configuration) {
         Ok(mut context) => {
