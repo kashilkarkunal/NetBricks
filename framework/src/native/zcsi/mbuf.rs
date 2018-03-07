@@ -1,6 +1,6 @@
 #[link(name = "gpu")]
 extern {
-   fn swap_mac_address(mbuf_vector: *mut MBuf, buffer_size: i32);
+   fn swap_mac_address(mbuf_vector: *mut *mut MBuf, buffer_size: usize);
 }
 
 #[repr(C)]
@@ -41,9 +41,9 @@ impl MBuf {
     }
 
     #[inline]
-    pub fn execute_gpu_nf(mbuf_vector: Vec<*mut MBuf>) {
+    pub fn execute_gpu_nf(mbuf_vector: &mut Vec<*mut MBuf>) {
        unsafe {
-
+           swap_mac_address(mbuf_vector.as_mut_ptr(), mbuf_vector.iter().len());
        }
     }
 

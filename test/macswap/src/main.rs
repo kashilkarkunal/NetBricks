@@ -66,7 +66,7 @@ fn main() {
             context.start_schedulers();
 
             context.add_pipeline_to_run(Arc::new(move |p, s: &mut StandaloneScheduler| test(p, s)));
-            context.execute();
+            context.execute_gpu_kernel();
 
             if test_duration != 0 {
                 thread::sleep(Duration::from_secs(test_duration));
