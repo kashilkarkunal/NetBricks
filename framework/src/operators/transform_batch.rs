@@ -5,7 +5,7 @@ use super::iterator::*;
 use super::packet_batch::PacketBatch;
 use common::*;
 use headers::EndOffset;
-use interface::Packet;
+use interface::*;
 use interface::PacketTx;
 use std::marker::PhantomData;
 
@@ -52,6 +52,7 @@ where
                 while let Some(ParsedDescriptor { mut packet, .. }) = iter.next(&mut self.parent) {
                     gpu_batch.push(&mut packet);
                 }
+                execute_gpu_nf(gpu_batch);
             }
             self.applied = true;
         }
