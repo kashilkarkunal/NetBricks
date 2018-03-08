@@ -62,7 +62,7 @@ where
 impl<T, V> BatchIterator for TransformBatch<T, V>
 where
     T: EndOffset,
-    V: Batch + BatchIterator<Header = T> + Act,
+    V: Batch + BatchIterator<Header = T> + Act + GpuNf,
 {
     type Header = T;
     type Metadata = <V as BatchIterator>::Metadata;
