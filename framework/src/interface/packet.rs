@@ -95,7 +95,7 @@ pub fn new_packet() -> Option<Packet<NullHeader, EmptyMetadata>> {
     }
 }
 
-pub fn execute_gpu_nf<T: EndOffset, M: Sized + Send>(packets: &mut [*mut MBuf], size: usize) {
+pub fn execute_gpu_nf(packets: &mut [*mut MBuf], size: usize) {
     unsafe {
         MBuf::execute_gpu_nf(packets, size);
     }

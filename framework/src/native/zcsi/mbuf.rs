@@ -1,6 +1,6 @@
 #[link(name = "gpu")]
 extern {
-   fn swap_mac_address(mbuf_vector: *mut *mut MBuf, buffer_size: usize);
+   fn swap_mac_address(mbuf_vector: &mut [*mut MBuf], buffer_size: usize);
 }
 
 #[repr(C)]

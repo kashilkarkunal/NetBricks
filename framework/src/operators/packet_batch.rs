@@ -20,6 +20,7 @@ pub struct PacketBatch {
 // *mut MBuf is not send by default.
 unsafe impl Send for PacketBatch {}
 
+
 impl PacketBatch {
     /// Create a new PacketBatch capable of holding up to `cnt` packets.
     pub fn new(cnt: i32) -> PacketBatch {
@@ -226,11 +227,11 @@ impl PacketBatch {
 impl GpuNf for PacketBatch {
     fn execute_gpu_nfv(&mut self) {
         unsafe {
-            execute_gpu_nf(self.packet_ptr(), self.array.len());
+            let len = self.array.len();
+            execute_gpu_nf(self.packet_ptr(), len);
         }
     }
 }
-
 
 // A packet batch is also a batch (just a special kind)
 impl BatchIterator for PacketBatch {
