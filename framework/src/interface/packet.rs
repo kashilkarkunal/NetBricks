@@ -101,7 +101,8 @@ pub fn execute_gpu_nf<T: EndOffset, M: Sized + Send>(packets: &mut Vec<*mut Pack
 
         for packet in packets {
             let pkt =  *packet ;
-            mbuf_vector.push((*pkt).mbuf);
+            let mbuf = (*pkt).mbuf;
+            mbuf_vector.push(mbuf);
         }
         MBuf::execute_gpu_nf(&mut mbuf_vector);
     }

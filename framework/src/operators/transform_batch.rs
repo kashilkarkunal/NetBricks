@@ -50,6 +50,7 @@ where
                 let mut gpu_batch : Vec<*mut Packet<T, V::Metadata>> = Vec::new();
                 let iter = PayloadEnumerator::<T, V::Metadata>::new(&mut self.parent);
                 while let Some(ParsedDescriptor { mut packet, .. }) = iter.next(&mut self.parent) {
+                    println!{"Adding packets to gpu batch {:?}", packet.get_payload()};
                     gpu_batch.push(&mut packet as *mut Packet<T, V::Metadata>);
                 }
                 execute_gpu_nf(&mut gpu_batch);

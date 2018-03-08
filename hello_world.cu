@@ -2,12 +2,7 @@
 #include <stdio.h>
 #include <assert.h>
 #include <stdlib.h>
-
-typedef struct _packet_{
-    char src_address[6];
-    char dst_address[6];
-    char data[6];
-} packet;
+#include "hello_world.h"
 
 packet create_packet() {
     packet p;
@@ -68,6 +63,25 @@ void garble_packet(packet packets[], int num) {
 
     for(int i = 0; i < num; i+=1) 
         printf("%s : %s \n", packets[i].src_address, packets[i].dst_address);
+}
+
+void swap_mac_address(GPUMbuf **packets, uint64_t size) {
+    if(packets == NULL) {
+        printf("Packets are null");
+        return;
+    }
+    for(int i = 0; i < size; i+=1) {
+        GPUMbuf *packet = packets[i];
+        if(packet == NULL) {
+            printf("Packet is null inside loop\n");
+            continue;
+        }
+        uint8_t *buf_addr = (*packet).buf_addr;
+        printf("The pool size is %s\n", buf_addr);
+        printf("The pkt_len size is %d\n", (*packet).pkt_len);
+        printf("The buf_len size is %d\n", (*packet).buf_len);
+        printf("The pkt_len size is %lld\n", (*packet).timestamp);
+    }
 }
 }
 
