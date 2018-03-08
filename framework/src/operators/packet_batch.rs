@@ -1,4 +1,5 @@
 use super::Batch;
+use super::gpunf::GpuNf;
 use super::act::Act;
 use super::iterator::{BatchIterator, PacketDescriptor};
 use common::*;
@@ -221,6 +222,15 @@ impl PacketBatch {
         }
     }
 }
+
+impl GpuNf for PacketBatch {
+    fn execute_gpu_nfv(&mut self) {
+        unsafe {
+            execute_gpu_nf(self.packet_ptr(), self.array.len());
+        }
+    }
+}
+
 
 // A packet batch is also a batch (just a special kind)
 impl BatchIterator for PacketBatch {

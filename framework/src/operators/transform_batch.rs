@@ -14,7 +14,7 @@ pub type TransformFn<T, M> = Box<FnMut(&mut Packet<T, M>) + Send>;
 pub struct TransformBatch<T, V>
 where
     T: EndOffset,
-    V: Batch + BatchIterator<Header = T> + Act,
+    V: Batch + BatchIterator<Header = T> + Act + GpuNf,
 {
     parent: V,
     transformer: TransformFn<T, V::Metadata>,
@@ -25,7 +25,7 @@ where
 impl<T, V> TransformBatch<T, V>
 where
     T: EndOffset,
-    V: Batch + BatchIterator<Header = T> + Act,
+    V: Batch + BatchIterator<Header = T> + Act + GpuNf,
 {
     pub fn new(parent: V, transformer: TransformFn<T, V::Metadata>) -> TransformBatch<T, V> {
         TransformBatch {
@@ -40,21 +40,13 @@ where
 impl <T, V> GpuNf for TransformBatch<T, V>
 where
     T: EndOffset,
-    V: Batch + BatchIterator<Header = T> + Act,
+    V: Batch + BatchIterator<Header = T> + Act + GpuNf,
 {
 
     fn execute_gpu_nfv(&mut self) {
         if !self.applied {
             self.parent.act();
-            {
-                let mut gpu_batch : Vec<*mut Packet<T, V::Metadata>> = Vec::new();
-                let iter = PayloadEnumerator::<T, V::Metadata>::new(&mut self.parent);
-                while let Some(ParsedDescriptor { mut packet, .. }) = iter.next(&mut self.parent) {
-                    println!{"Adding packets to gpu batch {:?}", packet.get_payload()};
-                    gpu_batch.push(&mut packet as *mut Packet<T, V::Metadata>);
-                }
-                execute_gpu_nf(&mut gpu_batch);
-            }
+            self.parent.execute_gpu_nfv();
             self.applied = true;
         }
     }
@@ -63,7 +55,7 @@ where
 impl<T, V> Batch for TransformBatch<T, V>
 where
     T: EndOffset,
-    V: Batch + BatchIterator<Header = T> + Act,
+    V: Batch + BatchIterator<Header = T> + Act + GpuNf,
 {
 }
 
@@ -88,7 +80,7 @@ where
 impl<T, V> Act for TransformBatch<T, V>
 where
     T: EndOffset,
-    V: Batch + BatchIterator<Header = T> + Act,
+    V: Batch + BatchIterator<Header = T> + Act + GpuNf,
 {
     #[inline]
     fn act(&mut self) {

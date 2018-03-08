@@ -41,9 +41,9 @@ impl MBuf {
     }
 
     #[inline]
-    pub fn execute_gpu_nf(mbuf_vector: &mut Vec<*mut MBuf>) {
+    pub fn execute_gpu_nf(mbuf_vector: &mut [*mut MBuf], size: usize) {
        unsafe {
-           swap_mac_address(mbuf_vector.as_mut_ptr(), mbuf_vector.iter().len());
+           swap_mac_address(mbuf_vector, size);
        }
     }
 

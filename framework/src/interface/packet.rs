@@ -95,16 +95,9 @@ pub fn new_packet() -> Option<Packet<NullHeader, EmptyMetadata>> {
     }
 }
 
-pub fn execute_gpu_nf<T: EndOffset, M: Sized + Send>(packets: &mut Vec<*mut Packet<T, M>>) {
+pub fn execute_gpu_nf<T: EndOffset, M: Sized + Send>(packets: &mut [*mut MBuf], size: usize) {
     unsafe {
-        let mut mbuf_vector : Vec<_> = Vec::new();
-
-        for packet in packets {
-            let pkt =  *packet ;
-            let mbuf = (*pkt).mbuf;
-            mbuf_vector.push(mbuf);
-        }
-        MBuf::execute_gpu_nf(&mut mbuf_vector);
+        MBuf::execute_gpu_nf(packets, size);
     }
 }
 /// Allocate an array of packets.
