@@ -11,7 +11,7 @@ use std::marker::PhantomData;
 pub struct ParsedBatch<T, V>
 where
     T: EndOffset<PreviousHeader = V::Header>,
-    V: Batch + BatchIterator + Act + GpuNf,
+    V: Batch + BatchIterator + Act,
 {
     parent: V,
     phantom: PhantomData<T>,
@@ -20,21 +20,21 @@ where
 impl<T, V> Act for ParsedBatch<T, V>
 where
     T: EndOffset<PreviousHeader = V::Header>,
-    V: Batch + BatchIterator + Act + GpuNf,
+    V: Batch + BatchIterator + Act,
 {
     act!{}
 }
 
 impl<T, V> Batch for ParsedBatch<T, V>
 where
-    V: Batch + BatchIterator + Act + GpuNf,
+    V: Batch + BatchIterator + Act,
     T: EndOffset<PreviousHeader = V::Header>,
 {
 }
 
 impl<T, V> ParsedBatch<T, V>
 where
-    V: Batch + BatchIterator + Act + GpuNf,
+    V: Batch + BatchIterator + Act,
     T: EndOffset<PreviousHeader = V::Header>,
 {
     #[inline]
@@ -58,7 +58,7 @@ where
 
 impl<T, V> BatchIterator for ParsedBatch<T, V>
 where
-    V: Batch + BatchIterator + Act + GpuNf,
+    V: Batch + BatchIterator + Act,
     T: EndOffset<PreviousHeader = V::Header>,
 {
     type Header = T;

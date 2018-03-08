@@ -56,7 +56,7 @@ pub fn merge<T: Batch>(batches: Vec<T>) -> MergeBatch<T> {
 /// Public trait implemented by every packet batch type. This trait should be used as a constraint for any functions or
 /// places where a Batch type is required. We declare batches as sendable, they cannot be copied but we allow it to be
 /// sent to another thread.
-pub trait Batch: BatchIterator + Act + Send + GpuNf{
+pub trait Batch: BatchIterator + Act + Send{
     /// Parse the payload as header of type.
     fn parse<T: EndOffset<PreviousHeader = Self::Header>>(self) -> ParsedBatch<T, Self>
     where

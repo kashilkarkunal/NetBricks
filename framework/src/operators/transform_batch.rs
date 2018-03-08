@@ -14,7 +14,7 @@ pub type TransformFn<T, M> = Box<FnMut(&mut Packet<T, M>) + Send>;
 pub struct TransformBatch<T, V>
 where
     T: EndOffset,
-    V: Batch + BatchIterator<Header = T> + Act + GpuNf,
+    V: Batch + BatchIterator<Header = T> + Act,
 {
     parent: V,
     transformer: TransformFn<T, V::Metadata>,
@@ -25,7 +25,7 @@ where
 impl<T, V> TransformBatch<T, V>
 where
     T: EndOffset,
-    V: Batch + BatchIterator<Header = T> + Act + GpuNf,
+    V: Batch + BatchIterator<Header = T> + Act,
 {
     pub fn new(parent: V, transformer: TransformFn<T, V::Metadata>) -> TransformBatch<T, V> {
         TransformBatch {
@@ -55,14 +55,14 @@ where
 impl<T, V> Batch for TransformBatch<T, V>
 where
     T: EndOffset,
-    V: Batch + BatchIterator<Header = T> + Act + GpuNf,
+    V: Batch + BatchIterator<Header = T> + Act,
 {
 }
 
 impl<T, V> BatchIterator for TransformBatch<T, V>
 where
     T: EndOffset,
-    V: Batch + BatchIterator<Header = T> + Act + GpuNf,
+    V: Batch + BatchIterator<Header = T> + Act,
 {
     type Header = T;
     type Metadata = <V as BatchIterator>::Metadata;
@@ -80,7 +80,7 @@ where
 impl<T, V> Act for TransformBatch<T, V>
 where
     T: EndOffset,
-    V: Batch + BatchIterator<Header = T> + Act + GpuNf,
+    V: Batch + BatchIterator<Header = T> + Act,
 {
     #[inline]
     fn act(&mut self) {
