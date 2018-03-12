@@ -86,7 +86,8 @@ void swap_mac_address(GPUMbuf **packetStream, uint64_t size){
         //printf("Outside GPU Size %d\n", stream[i].pkt_len);
         int buff_dat = stream[i].data_off;
         for( ; buff_dat < stream[i].data_off+12; ++buff_dat )
-            printf("inbuf %d ", stream[i].buf_addr[buff_dat]);
+            printf("%d ", stream[i].buf_addr[buff_dat]);
+        printf("\n");
     }
 
 	mac_swap_kernel<<<1,size>>>(dev_stream, size);
