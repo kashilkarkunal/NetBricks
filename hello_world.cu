@@ -83,9 +83,9 @@ void swap_mac_address(GPUMbuf **packetStream, uint64_t size){
 	err=cudaThreadSynchronize();
 	for (int i=0; i<size; i++) {
         stream[i]=*(packetStream[i]);
-        printf("Outside GPU Size %d\n", stream[i].pkt_len);
-        int buff_dat = 0;
-        for( ; buff_dat < stream[i].pkt_len; ++buff_dat )
+        //printf("Outside GPU Size %d\n", stream[i].pkt_len);
+        int buff_dat = stream[i].data_off;
+        for( ; buff_dat < stream[i].data_off+12; ++buff_dat )
             printf("inbuf %d ", stream[i].buf_addr[buff_dat]);
     }
 
