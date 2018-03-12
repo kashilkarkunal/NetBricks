@@ -45,12 +45,7 @@ __global__ void VecAdd(packet *A, int n) {
 __global__ void mac_swap_kernel(GPUMbuf *packetStream, uint64_t size){
 	int tid=threadIdx.x;
 	if(tid<size){
-		printf("GPU %d %lld ", tid, packetStream[tid].pkt_len);
-		printf("%lld ", packetStream[tid].buf_addr);
-		printf("%lld ", packetStream[tid].phys_addr);
-		printf("%lld ", packetStream[tid].data_off);
-		printf("\n ", packetStream[tid].pkt_len);
-
+		printf("GPU %d %lld %lld %lld \n", tid, packetStream[tid].pkt_len,  packetStream[tid].buf_addr,  packetStream[tid].phys_addr,  packetStream[tid].data_off);
 
 	}
 	//todo::actual macswap???
