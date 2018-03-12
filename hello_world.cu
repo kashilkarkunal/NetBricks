@@ -44,8 +44,15 @@ __global__ void VecAdd(packet *A, int n) {
 
 __global__ void mac_swap_kernel(GPUMbuf *packetStream, uint64_t size){
 	int tid=threadIdx.x;
-	if(tid<size)
-		printf("GPU %d %lld\n", tid, packetStream[tid].pkt_len);
+	if(tid<size){
+		printf("GPU %d %lld ", tid, packetStream[tid].pkt_len);
+		printf("%lld ", packetStream[tid].buf_addr);
+		printf("%lld ", packetStream[tid].phys_addr);
+		printf("%lld ", packetStream[tid].data_off);
+		printf("\n ", packetStream[tid].pkt_len);
+
+
+	}
 	//todo::actual macswap???
 }
 
@@ -125,6 +132,8 @@ void garble_packet(packet packets[], int num) {
     for(int i = 0; i < num; i+=1) 
         printf("%s : %s \n", packets[i].src_address, packets[i].dst_address);
 }
+
+
 
 /*
 void swap_mac_address(GPUMbuf **packets, uint64_t size) {
