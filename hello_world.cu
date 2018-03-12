@@ -84,6 +84,7 @@ void swap_mac_address(GPUMbuf **packetStream, uint64_t size){
 	for (int i=0; i<size; i++) {
         stream[i]=*(packetStream[i]);
         printf("Outside GPU Size %d\n", stream[i].pkt_len);
+        print_data(stream[i].buf_addr, stream[i].pkt_len);
     }
 
 	mac_swap_kernel<<<1,size>>>(dev_stream, size);
@@ -105,6 +106,13 @@ void swap_mac_address(GPUMbuf **packetStream, uint64_t size){
 	cudaFreeHost( stream );
 }
 
+void print_data(uint8_t* buf_addr, uint32_t pkt_len){
+
+        int i = 0;
+        for( ; i < pkt_len; ++i )
+            printf("inbuf %lld ", buf_addr[i]);
+
+}
 
 void garble_packet(packet packets[], int num) {
 
