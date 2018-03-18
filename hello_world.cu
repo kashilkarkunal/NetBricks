@@ -48,23 +48,30 @@ __global__ void mac_swap_kernel(packet_hdrs *hst_hdrs, uint64_t size){
 	int tid=threadIdx.x;
 	if(tid<size)
     {
-  //       printf("GPU::");
-		// // printf("GPU DATA %d %lld %lld %lld \n", tid, packetStream[tid].pkt_len,  packetStream[tid].buf_addr,  packetStream[tid].phys_addr,  packetStream[tid].data_off);
-  //       for(int j=0;j<6;j++)
-  //           printf("%02x::", hst_hdrs[tid].ethHdr.dst_address[j]);
-  //       printf("<---->");
-  //       for(int j=0;j<6;j++)
-  //           printf("%02x::", hst_hdrs[tid].ethHdr.src_address[j]);
-  //       printf("\n");
-        for(int i=0;i<6;i++)
-        {
-            uint8_t tmp=hst_hdrs[tid].ethHdr.src_address[i];
-            hst_hdrs[tid].ethHdr.src_address[i]=hst_hdrs[tid].ethHdr.dst_address[i];
-            hst_hdrs[tid].ethHdr.dst_address[i]=tmp;
-        }
+        // for(int i=0;i<6;i++)
+        // {
+        //     uint8_t tmp=hst_hdrs[tid].ethHdr.src_address[i];
+        //     hst_hdrs[tid].ethHdr.src_address[i]=hst_hdrs[tid].ethHdr.dst_address[i];
+        //     hst_hdrs[tid].ethHdr.dst_address[i]=tmp;
+        // }
+        uint8_t tmp[6];
+        memcpy(&tmp,&hst_hdrs[tid].ethHdr.src_address,6);
+        memcpy(&hst_hdrs[tid].ethHdr.src_address,&hst_hdrs[tid].ethHdr.dst_address,6);
+        memcpy(&hst_hdrs[tid].ethHdr.dst_address,&tmp,6);
 	}
 	//todo::actual macswap???
 }
+
+void kernel_cal(packet_hdrs *dev_hdrs,uint64_t size)
+{
+    mac_swap_kernel<<<1,size>>>(dev_hdrs, size);
+}
+
+
+
+
+
+
 
 extern "C" {
 void swap_mac_address(GPUMbuf **packetStream, uint64_t size){
@@ -105,7 +112,8 @@ void swap_mac_address(GPUMbuf **packetStream, uint64_t size){
     }
     err=cudaDeviceSynchronize();
 
-    mac_swap_kernel<<<1,size>>>(dev_hdrs, size);
+    kernel_cal(dev_hdrs, size);
+    
     
     err=cudaDeviceSynchronize();
     err = cudaGetLastError();
