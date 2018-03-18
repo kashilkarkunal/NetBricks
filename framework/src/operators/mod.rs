@@ -1,5 +1,4 @@
 use self::act::Act;
-use self::gpunf::GpuNf;
 pub use self::add_metadata::AddMetadataBatch;
 use self::add_metadata::MetadataFn;
 pub use self::add_metadata_mut::MutableAddMetadataBatch;

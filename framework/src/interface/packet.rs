@@ -96,9 +96,7 @@ pub fn new_packet() -> Option<Packet<NullHeader, EmptyMetadata>> {
 }
 
 pub fn execute_gpu_nf(packets: &mut [*mut MBuf], size: usize) {
-    unsafe {
         MBuf::execute_gpu_nf(packets, size);
-    }
 }
 /// Allocate an array of packets.
 pub fn new_packet_array(count: usize) -> Vec<Packet<NullHeader, EmptyMetadata>> {

@@ -1,6 +1,3 @@
-use super::packet_batch::PacketBatch;
-use common::*;
-
 pub trait GpuNf {
 
     #[inline]
