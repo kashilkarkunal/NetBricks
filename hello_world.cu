@@ -3,6 +3,8 @@
 #include <assert.h>
 #include <stdlib.h>
 #include "hello_world.h"
+#include <arpa/inet.h>
+
 
 packet create_packet() {
     packet p;
@@ -42,11 +44,24 @@ __global__ void VecAdd(packet *A, int n) {
     }
 }
 
-__global__ void mac_swap_kernel(GPUMbuf *packetStream, uint64_t size){
+__global__ void mac_swap_kernel(packet_hdrs *hst_hdrs, uint64_t size){
 	int tid=threadIdx.x;
-	if(tid<size){
-		printf("GPU %d %lld %lld %lld \n", tid, packetStream[tid].pkt_len,  packetStream[tid].buf_addr,  packetStream[tid].phys_addr,  packetStream[tid].data_off);
-
+	if(tid<size)
+    {
+  //       printf("GPU::");
+		// // printf("GPU DATA %d %lld %lld %lld \n", tid, packetStream[tid].pkt_len,  packetStream[tid].buf_addr,  packetStream[tid].phys_addr,  packetStream[tid].data_off);
+  //       for(int j=0;j<6;j++)
+  //           printf("%02x::", hst_hdrs[tid].ethHdr.dst_address[j]);
+  //       printf("<---->");
+  //       for(int j=0;j<6;j++)
+  //           printf("%02x::", hst_hdrs[tid].ethHdr.src_address[j]);
+  //       printf("\n");
+        for(int i=0;i<6;i++)
+        {
+            uint8_t tmp=hst_hdrs[tid].ethHdr.src_address[i];
+            hst_hdrs[tid].ethHdr.src_address[i]=hst_hdrs[tid].ethHdr.dst_address[i];
+            hst_hdrs[tid].ethHdr.dst_address[i]=tmp;
+        }
 	}
 	//todo::actual macswap???
 }
@@ -55,40 +70,115 @@ extern "C" {
 void swap_mac_address(GPUMbuf **packetStream, uint64_t size){
     cudaError_t err = cudaSuccess;
     cudaDeviceReset();
+    packet_hdrs hst_hdrs[size];
+    packet_hdrs* dev_hdrs;
+    for(int i=0;i<size;i++)
+    {
+        GPUMbuf mbuf=*(packetStream[i]);
+        uint8_t* buf=mbuf.buf_addr+mbuf.data_off;
+        memcpy((uint8_t*)&hst_hdrs[i],buf,sizeof(packet_hdrs));
+        // for(int j=0;j<6;j++)
+        //     printf("%02x::", hst_hdrs[i].ethHdr.dst_address[j]);
+        // printf("<---->");
+        // for(int j=0;j<6;j++)
+        //     printf("%02x::", hst_hdrs[i].ethHdr.src_address[j]);
+        // printf("\n");
+        // struct in_addr ip_addr;
+        // ip_addr.s_addr=;
+        //  memcpy(&ip_addr.s_addr, &hst_hdrs[i].ipHdr.src_ip, 4);
+        // printf("\nThe src IP address is %s\n", inet_ntoa(ip_addr));
+        // memcpy(&ip_addr.s_addr, &hst_hdrs[i].ipHdr.dst_ip, 4);
+        // printf("\nThe src IP address is %s\n", inet_ntoa(ip_addr));
+    }
+    size_t size_dev_hdrs=size*sizeof(packet_hdrs);
+    err = cudaMalloc((void **)&dev_hdrs, size_dev_hdrs);
+    if (err != cudaSuccess)
+    {
+        fprintf(stderr, "Failed to allocate device vector (error code %s)!\n", cudaGetErrorString(err));
+        exit(EXIT_FAILURE);
+    }
+    err = cudaMemcpy(dev_hdrs, hst_hdrs,size_dev_hdrs, cudaMemcpyHostToDevice);
+    if (err != cudaSuccess)
+    {
+        fprintf(stderr, "Failed to copy to GPU device (error code %s)!\n", cudaGetErrorString(err));
+        exit(EXIT_FAILURE);
+    }
+    err=cudaDeviceSynchronize();
 
- 	err = cudaSetDeviceFlags(cudaDeviceMapHost);
-	if (err != cudaSuccess){
-		fprintf(stderr, "Failed to set flag %s)!\n", cudaGetErrorString(err));
-		exit(EXIT_FAILURE);
-	}
+    mac_swap_kernel<<<1,size>>>(dev_hdrs, size);
+    
+    err=cudaDeviceSynchronize();
+    err = cudaGetLastError();
+    if (err != cudaSuccess){
+        fprintf(stderr, "Failed to launch mac_swap_kernel kernel (error code %s)!\n", cudaGetErrorString(err));
+        exit(EXIT_FAILURE);
+    }
 
-    err = cudaDeviceSynchronize();
-	if (err != cudaSuccess){
-		fprintf(stderr, "Failed to set flag %s)!\n", cudaGetErrorString(err));
-		exit(EXIT_FAILURE);
-	}
+    err = cudaMemcpy(hst_hdrs, dev_hdrs, size_dev_hdrs, cudaMemcpyDeviceToHost);
+    if (err != cudaSuccess){
+         fprintf(stderr, "Failed to copy vectorC from device to host (error code %s)!\n", cudaGetErrorString(err));
+        exit(EXIT_FAILURE);
+    }
 
-    GPUMbuf *dev_stream;
+     for(int i=0;i<size;i++)
+    {
+        GPUMbuf mbuf=*(packetStream[i]);
+        uint8_t* buf=mbuf.buf_addr+mbuf.data_off;
+        // memcpy((uint8_t*)&hst_hdrs[i],buf,sizeof(packet_hdrs));
+        memcpy(buf,(uint8_t*)&hst_hdrs[i],sizeof(packet_hdrs));
+    }
+
+ // 	err = cudaSetDeviceFlags(cudaDeviceMapHost);
+	// if (err != cudaSuccess){
+	// 	fprintf(stderr, "Failed to set flag %s)!\n", cudaGetErrorString(err));
+	// 	exit(EXIT_FAILURE);
+	// }
+
+ //    err = cudaDeviceSynchronize();
+	// if (err != cudaSuccess){
+	// 	fprintf(stderr, "Failed to set flag %s)!\n", cudaGetErrorString(err));
+	// 	exit(EXIT_FAILURE);
+	// }
+
+    // GPUMbuf *dev_stream;
+    
+	// if (err != cudaSuccess){
+	// 	fprintf(stderr, "Failed cuda cudaHostAlloc(error code %s)!\n", cudaGetErrorString(err));
+	// 	exit(EXIT_FAILURE);
+	// }
+	// err = cudaHostGetDevicePointer( &dev_stream, stream, 0 );
+	// if (err != cudaSuccess){
+	// 	fprintf(stderr, "Failed cuda cudaHostGetDevicePointer(error code %s)!\n", cudaGetErrorString(err));
+	// 	exit(EXIT_FAILURE);
+	// }
+	// err=cudaThreadSynchronize();
+    
+    /*
     GPUMbuf *stream;
-   	err = cudaMallocHost((void**)&stream, size*sizeof(GPUMbuf)); 
-	if (err != cudaSuccess){
-		fprintf(stderr, "Failed cuda cudaHostAlloc(error code %s)!\n", cudaGetErrorString(err));
-		exit(EXIT_FAILURE);
-	}
-	err = cudaHostGetDevicePointer( &dev_stream, stream, 0 );
-	if (err != cudaSuccess){
-		fprintf(stderr, "Failed cuda cudaHostGetDevicePointer(error code %s)!\n", cudaGetErrorString(err));
-		exit(EXIT_FAILURE);
-	}
-	err=cudaThreadSynchronize();
+    cudaMallocHost((void**)&stream, size*sizeof(GPUMbuf)); 
 	for (int i=0; i<size; i++) {
         stream[i]=*(packetStream[i]);
-        //printf("Outside GPU Size %d\n", stream[i].pkt_len);
+        printf("Outside GPU Size %d::%d::%d\n", stream[i].pkt_len,stream[i].data_len, stream[i].sync);
         int buff_dat = stream[i].data_off;
+        for( ; buff_dat < stream[i].data_off+6; ++buff_dat )
+            printf("%2x::", stream[i].buf_addr[buff_dat]);
+        printf("<------->");
         for( ; buff_dat < stream[i].data_off+12; ++buff_dat )
-            printf("%d ", stream[i].buf_addr[buff_dat]);
+            printf("%02x::", stream[i].buf_addr[buff_dat]);
+        printf("==========");
+        for( ; buff_dat < stream[i].data_off+14; ++buff_dat )
+            printf("%02x::", stream[i].buf_addr[buff_dat]);
+        struct in_addr ip_addr;
+        // ip_addr.s_addr = *((int*)(stream[i].buf_addr+buff_dat+3*4));
+        memcpy(&ip_addr.s_addr, stream[i].buf_addr+buff_dat+3*4, 4);
+        printf("\nThe src IP address is %s\n", inet_ntoa(ip_addr));
+        memcpy(&ip_addr.s_addr, stream[i].buf_addr+buff_dat+4*4, 4);
+        printf("The dst IP address is %s\n", inet_ntoa(ip_addr));
+
+        printf("----%d::", stream[i].buf_addr[buff_dat+1]);
         printf("\n");
     }
+    
 
 	mac_swap_kernel<<<1,size>>>(dev_stream, size);
 
@@ -107,6 +197,7 @@ void swap_mac_address(GPUMbuf **packetStream, uint64_t size){
 		*packetStream[i]=stream[i];
 
 	cudaFreeHost( stream );
+    */
 }
 
 
