@@ -2,73 +2,35 @@
 #include <stdio.h>
 #include <assert.h>
 #include <stdlib.h>
-#include "hello_world.h"
+// #include "hello_world.h"
 #include <arpa/inet.h>
+#include<pthread.h>
+#include "nf.cu"
 
 
-packet create_packet() {
-    packet p;
-    for(int i = 0; i < 5; i+=1) {
-        char srch = (rand()%26) + 65;
-        char dstch = (rand()%26) + 65;
-
-        p.src_address[i] = srch;
-        p.dst_address[i] = dstch;
-    }
-
-    p.src_address[5] = '\0';
-    p.dst_address[5] = '\0';
-
-    for(int i = 0; i < 100; i+=1) {
-        char data = (rand()%26) + 65;
-        p.data[i] = data;
-    }
-
-    return p;
+packet_hdrs *packet_hdr_ptr(GPUMbuf **packetStream,int i){
+    GPUMbuf *mbuf= packetStream[i];
+    // printf("%d\n", (*mbuf).pkt_len);
+    packet_hdrs *buf=(packet_hdrs *)((*mbuf).buf_addr+(*mbuf).data_off);
+    return buf;
 }
 
-__global__ void VecAdd(packet *A, int n) {
-    
-    int tx = threadIdx.x, ty = threadIdx.y;
 
-    int I = blockIdx.y*blockDim.y + ty;
-    int J = blockIdx.x*blockDim.x + tx;
 
-    int i = I*n + J;
+void cpu_nf_caller_call(GPUMbuf **packetStream,uint64_t size){
+    for(int i=0;i<size;i++){
+        packet_hdrs *pck_hdrs=packet_hdr_ptr(packetStream,i);
+        cpu_nf_call(pck_hdrs);
+        // uint8_t tmp[6];
+        // // for(int j=0;j<6;j++)
+        // //     printf("%02x::",(*pck_hdrs).ethHdr.src_address[j] );
+        // // printf("\n");
+        // memcpy(&tmp,pck_hdrs->ethHdr.src_address,6);
+        // memcpy(pck_hdrs->ethHdr.src_address,pck_hdrs->ethHdr.dst_address,6);
+        // memcpy(pck_hdrs->ethHdr.dst_address,&tmp,6);
 
-    if( i < n) { 
-        for(int j = 0; j < 5; j+=1) {
-            A[i].src_address[j] = 'a';
-            A[i].dst_address[j] = 'b';
-        }
     }
 }
-
-__global__ void mac_swap_kernel(packet_hdrs *hst_hdrs, uint64_t size){
-	int tid=threadIdx.x;
-	if(tid<size)
-    {
-        // for(int i=0;i<6;i++)
-        // {
-        //     uint8_t tmp=hst_hdrs[tid].ethHdr.src_address[i];
-        //     hst_hdrs[tid].ethHdr.src_address[i]=hst_hdrs[tid].ethHdr.dst_address[i];
-        //     hst_hdrs[tid].ethHdr.dst_address[i]=tmp;
-        // }
-        uint8_t tmp[6];
-        memcpy(&tmp,&hst_hdrs[tid].ethHdr.src_address,6);
-        memcpy(&hst_hdrs[tid].ethHdr.src_address,&hst_hdrs[tid].ethHdr.dst_address,6);
-        memcpy(&hst_hdrs[tid].ethHdr.dst_address,&tmp,6);
-	}
-	//todo::actual macswap???
-}
-
-void kernel_cal(packet_hdrs *dev_hdrs,uint64_t size)
-{
-    mac_swap_kernel<<<1,size>>>(dev_hdrs, size);
-}
-
-
-
 
 
 
@@ -79,6 +41,7 @@ void swap_mac_address(GPUMbuf **packetStream, uint64_t size){
     cudaDeviceReset();
     packet_hdrs hst_hdrs[size];
     packet_hdrs* dev_hdrs;
+    cpu_nf_caller_call(packetStream,size);
     for(int i=0;i<size;i++)
     {
         GPUMbuf mbuf=*(packetStream[i]);
@@ -112,7 +75,7 @@ void swap_mac_address(GPUMbuf **packetStream, uint64_t size){
     }
     err=cudaDeviceSynchronize();
 
-    kernel_cal(dev_hdrs, size);
+    // gpu_kernel_call(dev_hdrs, size);
     
     
     err=cudaDeviceSynchronize();
@@ -208,55 +171,5 @@ void swap_mac_address(GPUMbuf **packetStream, uint64_t size){
     */
 }
 
-
-void garble_packet(packet packets[], int num) {
-
-
-    printf("Starting Cuda Program %d \n", num);
-    int size = num*sizeof(packet);
-
-    packet *a;
-    cudaMalloc((void **)&a, size);
-
-    cudaMemcpy(a, packets, size, cudaMemcpyHostToDevice);
-    cudaThreadSynchronize();
-
-    VecAdd<<<num/10, 10>>> (a, num);
-
-    cudaThreadSynchronize();
-    cudaMemcpy(packets, a, size, cudaMemcpyDeviceToHost);
-    cudaFree(a);
-
-    for(int i = 0; i < num; i+=1) 
-        printf("%s : %s \n", packets[i].src_address, packets[i].dst_address);
-}
-
-
-
-/*
-void swap_mac_address(GPUMbuf **packets, uint64_t size) {
-    if(packets == NULL) {
-        printf("Packets are null");
-        return;
-    }
-    for(int i = 0; i < size; i+=1) {
-        GPUMbuf *packet = packets[i];
-        if(packet == NULL) {
-            printf("Packet is null inside loop\n");
-            continue;
-        }
-
-        uint8_t *buf_addr = (*packet).buf_addr;
-        printf("The buff addr is %s\n", (char *)buf_addr);
-        printf("The pkt_len size is %d\n", (*packet).pkt_len);
-        printf("The buf_len size is %d\n", (*packet).buf_len);
-        printf("The timestamp size is %lld\n", (*packet).timestamp);
-
-        for(int i = 0; i < (*packet).pkt_len; i+=1) {
-            printf("%c", (char) packet++);
-        }
-    }
-}
-*/
 }
 
