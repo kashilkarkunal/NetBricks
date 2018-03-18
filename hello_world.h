@@ -7,6 +7,31 @@ typedef struct _packet_{
     char data[6];
 } packet;
 
+typedef struct ethHeader{
+    uint8_t dst_address[6];
+    uint8_t src_address[6];
+    uint8_t ethType[2];    
+} ethHeader;
+
+typedef struct ipHeader{
+    uint8_t ver_ihl;
+    uint8_t dscp_ecn;
+    uint8_t tot_len[2];
+    uint8_t identification[2];
+    uint8_t flags_fraghosts[2];
+    uint8_t ttl;
+    uint8_t protocol;
+    uint8_t chksum[2];
+    uint8_t src_ip[4];
+    uint8_t dst_ip[4];
+
+} ipHeader;
+
+typedef struct packet_hdrs{
+    ethHeader ethHdr;
+    ipHeader ipHdr;
+} packet_hdrs;
+
 
 typedef struct _GPUMbuf_ {
 
@@ -54,6 +79,8 @@ typedef struct _GPUMbuf_ {
 
     uint32_t sync;
 }GPUMbuf;
+
+
 
 extern "C" {
 void garble_packet(packet packets[], int num);
