@@ -134,12 +134,14 @@ impl StandaloneScheduler {
             }
             let end = utils::rdtsc_unsafe();
             task.cycles += end - begin;
+            print!("standalone - {:?} cycles", end - begin);
             task.last_run = end;
             end
         };
         let len = self.run_q.len();
         let next = self.next_task + 1;
         if next == len {
+            println!(" 0");
             self.next_task = 0;
             if let Ok(cmd) = self.sched_channel.try_recv() {
                 self.handle_request(cmd);

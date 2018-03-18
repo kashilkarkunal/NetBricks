@@ -16,6 +16,7 @@ use std::process;
 use std::sync::Arc;
 use std::thread;
 use std::time::Duration;
+use time::PreciseTime;
 mod nf;
 
 fn test<T, S>(ports: Vec<T>, sched: &mut S)
@@ -29,7 +30,9 @@ where
 
     let pipelines: Vec<_> = ports
         .iter()
-        .map(|port| macswap(ReceiveBatch::new(port.clone())).send(port.clone()))
+        .map(|port|{ let batch = ReceiveBatch::new(port.clone());
+                         println!("Batch size : {}", batch.parent.array.len());
+                         macswap(batch).send(port.clone()) })
         .collect();
     println!("Running {} pipelines", pipelines.len());
     for pipeline in pipelines {
@@ -53,7 +56,7 @@ fn main() {
         Err(f) => panic!(f.to_string()),
     };
     let mut configuration = read_matches(&matches, &opts);
-    configuration.pool_size = 255;
+    configuration.pool_size = 450;
 
     let test_duration: u64 = matches
         .opt_str("dur")
@@ -63,9 +66,12 @@ fn main() {
 
     match initialize_system(&configuration) {
         Ok(mut context) => {
+            let start = PreciseTime::now();
             context.start_schedulers();
 
             context.add_pipeline_to_run(Arc::new(move |p, s: &mut StandaloneScheduler| test(p, s)));
+            let end = PreciseTime::now();
+            println!("initialize - {} seconds", start.to(end));
             context.execute_gpu_kernel();
 
             if test_duration != 0 {

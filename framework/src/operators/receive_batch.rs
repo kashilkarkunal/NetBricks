@@ -8,7 +8,7 @@ use headers::NullHeader;
 use interface::{PacketRx, PacketTx};
 
 pub struct ReceiveBatch<T: PacketRx> {
-    parent: PacketBatch,
+    pub parent: PacketBatch,
     queue: T,
     pub received: u64,
 }
@@ -24,7 +24,7 @@ impl<T: PacketRx> ReceiveBatch<T> {
 
     pub fn new(queue: T) -> ReceiveBatch<T> {
         ReceiveBatch {
-            parent: PacketBatch::new(32),
+            parent: PacketBatch::new(511),
             queue: queue,
             received: 0,
         }
