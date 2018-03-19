@@ -8,6 +8,12 @@
 #include "nf.cu"
 
 
+
+typedef struct pthread_struct {
+    GPUMbuf **packetStream;
+    uint64_t size;
+} pthread_struct;
+
 packet_hdrs *packet_hdr_ptr(GPUMbuf **packetStream,int i){
     GPUMbuf *mbuf= packetStream[i];
     // printf("%d\n", (*mbuf).pkt_len);
@@ -17,19 +23,15 @@ packet_hdrs *packet_hdr_ptr(GPUMbuf **packetStream,int i){
 
 
 
-void cpu_nf_caller_call(GPUMbuf **packetStream,uint64_t size){
+void *cpu_nf_caller_call(void *arg){
+    pthread_struct *args=(pthread_struct *)arg;
+    GPUMbuf **packetStream=args->packetStream;
+    uint64_t size=args->size;
     for(int i=0;i<size;i++){
         packet_hdrs *pck_hdrs=packet_hdr_ptr(packetStream,i);
         cpu_nf_call(pck_hdrs);
-        // uint8_t tmp[6];
-        // // for(int j=0;j<6;j++)
-        // //     printf("%02x::",(*pck_hdrs).ethHdr.src_address[j] );
-        // // printf("\n");
-        // memcpy(&tmp,pck_hdrs->ethHdr.src_address,6);
-        // memcpy(pck_hdrs->ethHdr.src_address,pck_hdrs->ethHdr.dst_address,6);
-        // memcpy(pck_hdrs->ethHdr.dst_address,&tmp,6);
-
     }
+    return NULL;
 }
 
 
@@ -41,7 +43,15 @@ void swap_mac_address(GPUMbuf **packetStream, uint64_t size){
     cudaDeviceReset();
     packet_hdrs hst_hdrs[size];
     packet_hdrs* dev_hdrs;
-    cpu_nf_caller_call(packetStream,size);
+
+    pthread_t my_thread;
+    pthread_struct pthread_Args;
+    pthread_Args.packetStream=packetStream;
+    pthread_Args.size=size;
+
+    pthread_create(&my_thread, NULL, cpu_nf_caller_call, &pthread_Args); 
+    pthread_join(my_thread, NULL);
+    // cpu_nf_caller_call(packetStream,size);
     for(int i=0;i<size;i++)
     {
         GPUMbuf mbuf=*(packetStream[i]);
@@ -98,77 +108,6 @@ void swap_mac_address(GPUMbuf **packetStream, uint64_t size){
         // memcpy((uint8_t*)&hst_hdrs[i],buf,sizeof(packet_hdrs));
         memcpy(buf,(uint8_t*)&hst_hdrs[i],sizeof(packet_hdrs));
     }
-
- // 	err = cudaSetDeviceFlags(cudaDeviceMapHost);
-	// if (err != cudaSuccess){
-	// 	fprintf(stderr, "Failed to set flag %s)!\n", cudaGetErrorString(err));
-	// 	exit(EXIT_FAILURE);
-	// }
-
- //    err = cudaDeviceSynchronize();
-	// if (err != cudaSuccess){
-	// 	fprintf(stderr, "Failed to set flag %s)!\n", cudaGetErrorString(err));
-	// 	exit(EXIT_FAILURE);
-	// }
-
-    // GPUMbuf *dev_stream;
-    
-	// if (err != cudaSuccess){
-	// 	fprintf(stderr, "Failed cuda cudaHostAlloc(error code %s)!\n", cudaGetErrorString(err));
-	// 	exit(EXIT_FAILURE);
-	// }
-	// err = cudaHostGetDevicePointer( &dev_stream, stream, 0 );
-	// if (err != cudaSuccess){
-	// 	fprintf(stderr, "Failed cuda cudaHostGetDevicePointer(error code %s)!\n", cudaGetErrorString(err));
-	// 	exit(EXIT_FAILURE);
-	// }
-	// err=cudaThreadSynchronize();
-    
-    /*
-    GPUMbuf *stream;
-    cudaMallocHost((void**)&stream, size*sizeof(GPUMbuf)); 
-	for (int i=0; i<size; i++) {
-        stream[i]=*(packetStream[i]);
-        printf("Outside GPU Size %d::%d::%d\n", stream[i].pkt_len,stream[i].data_len, stream[i].sync);
-        int buff_dat = stream[i].data_off;
-        for( ; buff_dat < stream[i].data_off+6; ++buff_dat )
-            printf("%2x::", stream[i].buf_addr[buff_dat]);
-        printf("<------->");
-        for( ; buff_dat < stream[i].data_off+12; ++buff_dat )
-            printf("%02x::", stream[i].buf_addr[buff_dat]);
-        printf("==========");
-        for( ; buff_dat < stream[i].data_off+14; ++buff_dat )
-            printf("%02x::", stream[i].buf_addr[buff_dat]);
-        struct in_addr ip_addr;
-        // ip_addr.s_addr = *((int*)(stream[i].buf_addr+buff_dat+3*4));
-        memcpy(&ip_addr.s_addr, stream[i].buf_addr+buff_dat+3*4, 4);
-        printf("\nThe src IP address is %s\n", inet_ntoa(ip_addr));
-        memcpy(&ip_addr.s_addr, stream[i].buf_addr+buff_dat+4*4, 4);
-        printf("The dst IP address is %s\n", inet_ntoa(ip_addr));
-
-        printf("----%d::", stream[i].buf_addr[buff_dat+1]);
-        printf("\n");
-    }
-    
-
-	mac_swap_kernel<<<1,size>>>(dev_stream, size);
-
-    err = cudaGetLastError();
-	if (err != cudaSuccess){
-		fprintf(stderr, "Failed to launch vectorAdd kernel (error code %s)!\n", cudaGetErrorString(err));
-		exit(EXIT_FAILURE);
-	}
-
-    err=cudaDeviceSynchronize();
-	if (err != cudaSuccess){
-		fprintf(stderr, "waitinf for cuda kernel fialed (error code %s)!\n", cudaGetErrorString(err));
-		exit(EXIT_FAILURE);
-	}
-	for(int i=0;i<size;i++)
-		*packetStream[i]=stream[i];
-
-	cudaFreeHost( stream );
-    */
 }
 
 }
