@@ -99,8 +99,20 @@ void swap_mac_address(GPUMbuf **packetStream, uint64_t size){
     printf("CUDA MALLOC::%llu\n", diff(timers.gpu_lo1,timers.gpu_hi1,timers.gpu_lo2,timers.gpu_hi2));
 
   }
+
+
+
+
+
+
+
+
+
     printf("%llu\n",size );
-  asm volatile (
+
+
+
+asm volatile (
       "rdtsc\n\t"
       "mov %%edx, %0\n\t"
       "mov %%eax, %1\n\t"
@@ -109,9 +121,36 @@ void swap_mac_address(GPUMbuf **packetStream, uint64_t size){
    pthread_t my_thread;
     pthread_struct pthread_Args;
     pthread_Args.packetStream=packetStream;
-    pthread_Args.size=400;
+    pthread_Args.size=size;
  
     pthread_create(&my_thread, NULL, cpu_nf_caller_call, &pthread_Args); 
+   pthread_join(my_thread, NULL);
+
+    asm volatile (
+  "rdtsc\n\t"
+  "mov %%edx, %0\n\t"
+  "mov %%eax, %1\n\t"
+  : "=r" (timers.cpu_hi2), "=r" (timers.cpu_lo2)
+  :: "%rax", "%rbx", "%rcx", "%rdx");
+  unsigned long long int cpu_time=diff(timers.cpu_lo1,timers.cpu_hi1,timers.cpu_lo2,timers.cpu_hi2);
+
+
+
+
+
+
+  asm volatile (
+      "rdtsc\n\t"
+      "mov %%edx, %0\n\t"
+      "mov %%eax, %1\n\t"
+      : "=r" (timers.cpu_hi1), "=r" (timers.cpu_lo1)
+      :: "%rax", "%rbx", "%rcx", "%rdx");
+   pthread_t my_thread2;
+    pthread_struct pthread_Args2;
+    pthread_Args2.packetStream=packetStream;
+    pthread_Args2.size=200;
+ 
+    pthread_create(&my_thread2, NULL, cpu_nf_caller_call, &pthread_Args2); 
    
 
   
@@ -137,7 +176,7 @@ void swap_mac_address(GPUMbuf **packetStream, uint64_t size){
    
 
     // cpu_nf_caller_call(packetStream,size);
-    for(int i=400;i<size;i++)
+    for(int i=200;i<size;i++)
     {
         GPUMbuf mbuf=*(packetStream[i]);
         uint8_t* buf=mbuf.buf_addr+mbuf.data_off;
@@ -266,7 +305,7 @@ void swap_mac_address(GPUMbuf **packetStream, uint64_t size){
 
 
 
-    pthread_join(my_thread, NULL);
+    pthread_join(my_thread2, NULL);
 
     asm volatile (
   "rdtsc\n\t"
@@ -275,12 +314,12 @@ void swap_mac_address(GPUMbuf **packetStream, uint64_t size){
   : "=r" (timers.cpu_hi2), "=r" (timers.cpu_lo2)
   :: "%rax", "%rbx", "%rcx", "%rdx");
 
-  unsigned long long int cpu_time=diff(timers.cpu_lo1,timers.cpu_hi1,timers.cpu_lo2,timers.cpu_hi2);
+  unsigned long long int hyb_time=diff(timers.cpu_lo1,timers.cpu_hi1,timers.cpu_lo2,timers.cpu_hi2);
      
     unsigned long long int gpu_time=diff(timers.gpu_mem_lo1,timers.gpu_mem_hi1,timers.gpu_mem_lo2,timers.gpu_mem_hi2);
     printf("GPU::%llu\n", gpu_time);
     printf("CPU::%llu\n",cpu_time );
-    // printf("Tot::%llu,\n",cpu_time+gpu_time);
+    printf("HYB::%llu,\n",hyb_time);
 }
 
 
