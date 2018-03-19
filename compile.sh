@@ -8,4 +8,4 @@ ar cru libgpu.a hello_world.o temp.o
 echo " " >> framework/src/interface/packet.rs
 ./build.sh build_fmwk
 ./build.sh build_test macswap
-./check.sh
+#./check.sh

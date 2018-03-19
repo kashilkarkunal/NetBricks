@@ -529,4 +529,12 @@ impl<T: EndOffset, M: Sized + Send> Packet<T, M> {
         self.mbuf = ptr::null_mut();
         mbuf
     }
-}
+} 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 

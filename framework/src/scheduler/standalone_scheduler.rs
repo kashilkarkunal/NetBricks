@@ -125,9 +125,11 @@ impl StandaloneScheduler {
 
     #[inline]
     fn execute_internal(&mut self, begin: u64, gpu_kernel: bool) -> u64 {
+        print!("Inside execute Internal");
         let time = {
             let task = &mut (&mut self.run_q[self.next_task]);
             if gpu_kernel {
+                print!("Inside gpu_kernel call");
                 task.task.execute_gpu_kernel();
             } else {
                 task.task.execute();
