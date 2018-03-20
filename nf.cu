@@ -1,4 +1,11 @@
 #include "hello_world.h"
+typedef struct firewallNode{
+    uint8_t src_ip[4];
+    uint8_t dst_ip[4];
+    int mask[4];
+}firewallNode;
+
+firewallNode *blockIpsList;
 
 __global__ void mac_swap_kernel(packet_hdrs *hst_hdrs, uint64_t size){
 	int tid=threadIdx.x;
@@ -27,4 +34,12 @@ void cpu_nf_call(packet_hdrs *pack_hdr)
     memcpy(&tmp,pack_hdr->ethHdr.src_address,6);
     memcpy(pack_hdr->ethHdr.src_address,pack_hdr->ethHdr.dst_address,6);
     memcpy(pack_hdr->ethHdr.dst_address,&tmp,6);
+}
+
+void init()
+{
+    // File *fptr;
+    // fptr = fopen ("blockList.txt","r");
+
+ 
 }

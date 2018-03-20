@@ -8,10 +8,10 @@
 #include "nf.cu"
 
 #define timeIO 1
-#define RunBoth 1
+#define RunLevel 3
 
 int kunal=5678;
-int Cpu_BatchSize;
+int Cpu_BatchSize=100;
 // int GPU_BatchSize;
 int max_size=512;
 packet_hdrs *hst_hdrs;
@@ -135,23 +135,36 @@ void swap_mac_address(GPUMbuf **packetStream, uint64_t size){
   if(!first){
     size_dev_hdrs=max_size*sizeof(packet_hdrs);
     hst_hdrs=(packet_hdrs *)malloc(max_size*sizeof(packet_hdrs));
-    GPU_startTime();
-    err=cudaMalloc((void **)&dev_hdrs, size_dev_hdrs);
-    if (err != cudaSuccess){
-        fprintf(stderr, "Failed to allocate device vector (error code %s)!\n", cudaGetErrorString(err));
-        exit(EXIT_FAILURE);
-    }
-    first=1;
-    void GPU_endTime();  
-    if(timeIO)
+    
+    if(RunLevel>1){
+      GPU_startTime();
+      err=cudaMalloc((void **)&dev_hdrs, size_dev_hdrs);
+      if (err != cudaSuccess){
+          fprintf(stderr, "Failed to allocate device vector (error code %s)!\n", cudaGetErrorString(err));
+          exit(EXIT_FAILURE);
+      GPU_endTime();  
+      if(timeIO)
       printf("CUDA MALLOC::%llu\n", diff(timers.gpu_lo1,timers.gpu_hi1,timers.gpu_lo2,timers.gpu_hi2));
+      }
+    } 
+    init();
+    first=1; 
   }
-  unsigned long long int cpu_time
+  unsigned long long int cpu_time;
+  unsigned long long int gpu_time;
+  unsigned long long int hyb_time;
+
+  if(RunLevel==2)
+    Cpu_BatchSize=0;
+  else
+    Cpu_BatchSize=100;
+  
+
 
   if(timeIO)
     printf("%llu\n",size );
 
-  if(RunBoth){
+  if(RunLevel==1){
     CPU_startTime();
 
     pthread_t my_thread;
@@ -161,7 +174,7 @@ void swap_mac_address(GPUMbuf **packetStream, uint64_t size){
     pthread_create(&my_thread, NULL, cpu_nf_caller_call, &pthread_Args); 
     pthread_join(my_thread, NULL);
 
-    CPU_endTime()
+    CPU_endTime();
     cpu_time=diff(timers.cpu_lo1,timers.cpu_hi1,timers.cpu_lo2,timers.cpu_hi2);
   }
   else{
@@ -233,9 +246,9 @@ void swap_mac_address(GPUMbuf **packetStream, uint64_t size){
     GPU_Tot_endTime();
     pthread_join(my_thread2, NULL);
     CPU_endTime();
-    unsigned long long int hyb_time=diff(timers.cpu_lo1,timers.cpu_hi1,timers.cpu_lo2,timers.cpu_hi2);
+    hyb_time=diff(timers.cpu_lo1,timers.cpu_hi1,timers.cpu_lo2,timers.cpu_hi2);
 
-    unsigned long long int gpu_time=diff(timers.gpu_mem_lo1,timers.gpu_mem_hi1,timers.gpu_mem_lo2,timers.gpu_mem_hi2);
+    gpu_time=diff(timers.gpu_mem_lo1,timers.gpu_mem_hi1,timers.gpu_mem_lo2,timers.gpu_mem_hi2);
     printf("GPU::%llu\n", gpu_time);
     printf("CPU::%llu\n",cpu_time );
     printf("HYB::%llu,\n",hyb_time);
