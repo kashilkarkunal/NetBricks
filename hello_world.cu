@@ -180,11 +180,14 @@ void swap_mac_address(GPUMbuf **packetStream, uint64_t size){
   else{
     CPU_startTime();
     pthread_t my_thread2;
-    pthread_struct pthread_Args2;
-    pthread_Args2.packetStream=packetStream;
-    pthread_Args2.size=Cpu_BatchSize;
-   
-    pthread_create(&my_thread2, NULL, cpu_nf_caller_call, &pthread_Args2); 
+    if(RunLevel==3){
+      pthread_struct pthread_Args2;
+      pthread_Args2.packetStream=packetStream;
+      pthread_Args2.size=Cpu_BatchSize;
+     
+      pthread_create(&my_thread2, NULL, cpu_nf_caller_call, &pthread_Args2); 
+    }
+    
 
     
     GPU_Tot_startTime();
@@ -244,7 +247,8 @@ void swap_mac_address(GPUMbuf **packetStream, uint64_t size){
     if(timeIO)
       printf("CPU Copy back time::%llu\n", diff(timers.gpu_lo1,timers.gpu_hi1,timers.gpu_lo2,timers.gpu_hi2));
     GPU_Tot_endTime();
-    pthread_join(my_thread2, NULL);
+    if(RunLevel==3)
+      pthread_join(my_thread2, NULL);
     CPU_endTime();
     hyb_time=diff(timers.cpu_lo1,timers.cpu_hi1,timers.cpu_lo2,timers.cpu_hi2);
 
