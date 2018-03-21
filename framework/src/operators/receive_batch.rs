@@ -24,7 +24,7 @@ impl<T: PacketRx> ReceiveBatch<T> {
 
     pub fn new(queue: T) -> ReceiveBatch<T> {
         ReceiveBatch {
-            parent: PacketBatch::new(511),
+            parent: PacketBatch::new(512),
             queue: queue,
             received: 0,
         }
