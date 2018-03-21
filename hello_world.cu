@@ -24,6 +24,9 @@ int first=0;
 cudaError_t err = cudaSuccess; 
 size_t size_dev_hdrs;
 
+firewallNode *hst_state;
+firewallNode *dev_state;
+
 
 unsigned long long diff(unsigned lo1,unsigned hi1, unsigned lo2, unsigned hi2)
 {
@@ -139,19 +142,40 @@ void swap_mac_address(GPUMbuf **packetStream, uint64_t size){
   if(!first){
     size_dev_hdrs=max_size*sizeof(packet_hdrs);
     hst_hdrs=(packet_hdrs *)malloc(max_size*sizeof(packet_hdrs));
-    
+    int count_states=init(&hst_state);
     if(RunLevel>1){
       GPU_startTime();
       err=cudaMalloc((void **)&dev_hdrs, size_dev_hdrs);
       if (err != cudaSuccess){
           fprintf(stderr, "Failed to allocate device vector (error code %s)!\n", cudaGetErrorString(err));
           exit(EXIT_FAILURE);
+      }
+      size_t size_dev_state=count_states*sizeof(firewallNode);
+
+      for(int i=0;i<count_states;i++)
+           printf("%hhu.%hhu.%hhu.%hhu/%hhu\n", hst_state[i].src_ip[0],hst_state[i].src_ip[1],
+        hst_state[i].src_ip[2],hst_state[i].src_ip[3],hst_state[i].mask);
+
+
+
+      printf("count::%d\n",count_states );
+      err=cudaMalloc((void **)&dev_state, size_dev_state);
+      if (err != cudaSuccess){
+          fprintf(stderr, "Failed to allocate device vector for states(error code %s)!\n", cudaGetErrorString(err));
+          exit(EXIT_FAILURE);
+      }
+      err = cudaMemcpy(dev_state, hst_state,size_dev_state, cudaMemcpyHostToDevice);
+      if (err != cudaSuccess)
+      {
+          fprintf(stderr, "Failed to copy states to GPU device (error code %s)!\n", cudaGetErrorString(err));
+          exit(EXIT_FAILURE);
+      }
+      init_gpu_state(dev_state);
       GPU_endTime();  
       if(timeIO)
         printf("CUDA MALLOC::%llu\n", diff(timers.gpu_lo1,timers.gpu_hi1,timers.gpu_lo2,timers.gpu_hi2));
-      }
     } 
-    init();
+    
     first=1; 
   }
   unsigned long long int cpu_time=0;
@@ -164,11 +188,11 @@ void swap_mac_address(GPUMbuf **packetStream, uint64_t size){
     Cpu_BatchSize=MIN(Max_CPU_BatchSize,size);
 
 
-  if(timeIO)
-  {
-    printf("TOT_BS::%llu\n",size );
-    printf("CPU_BS::%llu\n",Cpu_BatchSize );
-  }
+  // if(timeIO)
+  // {
+  //   // printf("TOT_BS::%llu\n",size );
+  //   // printf("CPU_BS::%llu\n",Cpu_BatchSize );
+  // }
   
 
   if(RunLevel==1){
@@ -199,8 +223,8 @@ void swap_mac_address(GPUMbuf **packetStream, uint64_t size){
     else
       GPU_BatchSize=0;
 
-    if(timeIO)
-      printf("GPU_BS::%llu\n",GPU_BatchSize );
+    // if(timeIO)
+      // printf("GPU_BS::%llu\n",GPU_BatchSize );
 
     GPU_Tot_startTime();
     GPU_startTime();
@@ -274,7 +298,7 @@ void swap_mac_address(GPUMbuf **packetStream, uint64_t size){
     else
       GPU_BatchSize=0;
 
-    printf("GPU_BS::%llu\n",GPU_BatchSize );
+    // printf("GPU_BS::%llu\n",GPU_BatchSize );
 
     GPU_Tot_startTime();
     GPU_startTime();
