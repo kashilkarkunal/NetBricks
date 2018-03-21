@@ -7,14 +7,14 @@
 #include<pthread.h>
 #include "nf.cu"
 
-#define timeIO 0
-#define RunLevel 3
+#define timeIO 1
+#define RunLevel 1
 
 #define MIN(a,b) (((a)<(b))?(a):(b))
 #define MAX(a,b) (((a)>(b))?(a):(b))
 
 int kunal=5678;
-uint64_t Max_CPU_BatchSize=50;
+uint64_t Max_CPU_BatchSize=20;
 uint64_t Cpu_BatchSize;
 uint64_t GPU_BatchSize;
 uint64_t max_size=512;
@@ -152,13 +152,13 @@ void swap_mac_address(GPUMbuf **packetStream, uint64_t size){
       }
       size_t size_dev_state=count_states*sizeof(firewallNode);
 
-      for(int i=0;i<count_states;i++)
-           printf("%hhu.%hhu.%hhu.%hhu/%hhu\n", hst_state[i].src_ip[0],hst_state[i].src_ip[1],
-        hst_state[i].src_ip[2],hst_state[i].src_ip[3],hst_state[i].mask);
+      //for(int i=0;i<count_states;i++)
+           //printf("%hhu.%hhu.%hhu.%hhu/%hhu\n", hst_state[i].src_ip[0],hst_state[i].src_ip[1],
+        //hst_state[i].src_ip[2],hst_state[i].src_ip[3],hst_state[i].mask);
 
 
 
-      printf("count::%d\n",count_states );
+      //printf("count::%d\n",count_states );
       err=cudaMalloc((void **)&dev_state, size_dev_state);
       if (err != cudaSuccess){
           fprintf(stderr, "Failed to allocate device vector for states(error code %s)!\n", cudaGetErrorString(err));
