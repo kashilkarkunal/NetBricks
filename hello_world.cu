@@ -7,14 +7,14 @@
 #include<pthread.h>
 #include "nf.cu"
 
-#define timeIO 1
+#define timeIO 0
 #define RunLevel 3
 
 #define MIN(a,b) (((a)<(b))?(a):(b))
 #define MAX(a,b) (((a)>(b))?(a):(b))
 
 int kunal=5678;
-uint64_t Max_CPU_BatchSize=125;
+uint64_t Max_CPU_BatchSize=50;
 uint64_t Cpu_BatchSize;
 uint64_t GPU_BatchSize;
 uint64_t max_size=512;
@@ -148,7 +148,7 @@ void swap_mac_address(GPUMbuf **packetStream, uint64_t size){
           exit(EXIT_FAILURE);
       GPU_endTime();  
       if(timeIO)
-      printf("CUDA MALLOC::%llu\n", diff(timers.gpu_lo1,timers.gpu_hi1,timers.gpu_lo2,timers.gpu_hi2));
+        printf("CUDA MALLOC::%llu\n", diff(timers.gpu_lo1,timers.gpu_hi1,timers.gpu_lo2,timers.gpu_hi2));
       }
     } 
     init();
@@ -165,8 +165,11 @@ void swap_mac_address(GPUMbuf **packetStream, uint64_t size){
 
 
   if(timeIO)
+  {
     printf("TOT_BS::%llu\n",size );
-  printf("CPU_BS::%llu\n",Cpu_BatchSize );
+    printf("CPU_BS::%llu\n",Cpu_BatchSize );
+  }
+  
 
   if(RunLevel==1){
     CPU_startTime();
@@ -196,7 +199,8 @@ void swap_mac_address(GPUMbuf **packetStream, uint64_t size){
     else
       GPU_BatchSize=0;
 
-    printf("GPU_BS::%llu\n",GPU_BatchSize );
+    if(timeIO)
+      printf("GPU_BS::%llu\n",GPU_BatchSize );
 
     GPU_Tot_startTime();
     GPU_startTime();
@@ -337,10 +341,11 @@ void swap_mac_address(GPUMbuf **packetStream, uint64_t size){
 
     gpu_time=diff(timers.gpu_mem_lo1,timers.gpu_mem_hi1,timers.gpu_mem_lo2,timers.gpu_mem_hi2);
   }
-  printf("GPU::%llu\n", gpu_time);
-  printf("CPU::%llu\n",cpu_time );
-  printf("HYB::%llu,\n",hyb_time);
-  
+  if(timeIO){
+    printf("GPU::%llu\n", gpu_time);
+    printf("CPU::%llu\n",cpu_time );
+    printf("HYB::%llu,\n",hyb_time);
+  }
 }
 
 
