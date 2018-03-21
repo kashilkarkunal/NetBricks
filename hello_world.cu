@@ -8,7 +8,7 @@
 #include "nf.cu"
 
 #define timeIO 0
-#define RunLevel 3
+#define RunLevel 1
 
 #define MIN(a,b) (((a)<(b))?(a):(b))
 #define MAX(a,b) (((a)>(b))?(a):(b))
