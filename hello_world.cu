@@ -72,6 +72,17 @@ void *cpu_nf_caller_call(void *arg){
     return NULL;
 }
 
+void cpu_nf_caller_call_justCPU(GPUMbuf **packetStream, uint64_t size){
+    // pthread_struct *args=(pthread_struct *)arg;
+    // GPUMbuf **packetStream=args->packetStream;
+    // uint64_t size=args->size;
+    for(int i=0;i<size;i++){
+        packet_hdrs *pck_hdrs=packet_hdr_ptr(packetStream,i);
+        cpu_nf_call(pck_hdrs);
+    }
+    return;
+}
+
 void GPU_startTime()
 {
     asm volatile (
@@ -198,12 +209,13 @@ void swap_mac_address(GPUMbuf **packetStream, uint64_t size){
   if(RunLevel==1){
     CPU_startTime();
 
-    pthread_t my_thread;
-    pthread_struct pthread_Args;
-    pthread_Args.packetStream=packetStream;
-    pthread_Args.size=size;
-    pthread_create(&my_thread, NULL, cpu_nf_caller_call, &pthread_Args); 
-    pthread_join(my_thread, NULL);
+    // pthread_t my_thread;
+    // pthread_struct pthread_Args;
+    // pthread_Args.packetStream=packetStream;
+    // pthread_Args.size=size;
+    // pthread_create(&my_thread, NULL, cpu_nf_caller_call, &pthread_Args); 
+    // pthread_join(my_thread, NULL);
+    cpu_nf_caller_call_justCPU(packetStream,size);
 
     CPU_endTime();
     cpu_time=diff(timers.cpu_lo1,timers.cpu_hi1,timers.cpu_lo2,timers.cpu_hi2);
