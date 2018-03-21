@@ -8,12 +8,14 @@ typedef struct firewallNode{
 firewallNode *blockIpsList;
 
 __global__ void mac_swap_kernel(packet_hdrs *hst_hdrs, uint64_t size){
-	int tid=threadIdx.x;
+	int tid=blockDim.x * blockIdx.x + threadIdx.x;
     int a=1;
+    // printf("%d\n",tid );
 	if(tid<size){
+        // printf("gp::%d::%llu\n",tid,size );
         uint8_t tmp[6];
-        for(int k=0;k<100;k++)
-            a++;
+        // for(int k=0;k<100;k++)
+        //     a++;
         memcpy(&tmp,&hst_hdrs[tid].ethHdr.src_address,6);
         memcpy(&hst_hdrs[tid].ethHdr.src_address,&hst_hdrs[tid].ethHdr.dst_address,6);
         memcpy(&hst_hdrs[tid].ethHdr.dst_address,&tmp,6);
@@ -22,15 +24,18 @@ __global__ void mac_swap_kernel(packet_hdrs *hst_hdrs, uint64_t size){
 
 void gpu_kernel_call(packet_hdrs *dev_hdrs,uint64_t size){
     int numblocks=(size/32)+1;
+    // printf("here\n");
+    // printf("hehre::%llu,%d\n",size,numblocks);
     mac_swap_kernel<<<numblocks,32>>>(dev_hdrs, size);
+     // printf("hehre::%llu\n",size);
 }
 
 void cpu_nf_call(packet_hdrs *pack_hdr)
 {
     uint8_t tmp[6];
     int a=0;
-    for(int k=0;k<100;k++)
-            a++;
+    // for(int k=0;k<100;k++)
+    //         a++;
     memcpy(&tmp,pack_hdr->ethHdr.src_address,6);
     memcpy(pack_hdr->ethHdr.src_address,pack_hdr->ethHdr.dst_address,6);
     memcpy(pack_hdr->ethHdr.dst_address,&tmp,6);

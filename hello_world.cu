@@ -10,10 +10,14 @@
 #define timeIO 1
 #define RunLevel 3
 
+#define MIN(a,b) (((a)<(b))?(a):(b))
+#define MAX(a,b) (((a)>(b))?(a):(b))
+
 int kunal=5678;
-int Cpu_BatchSize=100;
-// int GPU_BatchSize;
-int max_size=512;
+uint64_t Max_CPU_BatchSize=125;
+uint64_t Cpu_BatchSize;
+uint64_t GPU_BatchSize;
+uint64_t max_size=512;
 packet_hdrs *hst_hdrs;
 packet_hdrs* dev_hdrs;
 int first=0;
@@ -150,19 +154,19 @@ void swap_mac_address(GPUMbuf **packetStream, uint64_t size){
     init();
     first=1; 
   }
-  unsigned long long int cpu_time;
-  unsigned long long int gpu_time;
-  unsigned long long int hyb_time;
+  unsigned long long int cpu_time=0;
+  unsigned long long int gpu_time=0;
+  unsigned long long int hyb_time=0;
 
   if(RunLevel==2)
     Cpu_BatchSize=0;
   else
-    Cpu_BatchSize=100;
-  
+    Cpu_BatchSize=MIN(Max_CPU_BatchSize,size);
 
 
   if(timeIO)
-    printf("%llu\n",size );
+    printf("TOT_BS::%llu\n",size );
+  printf("CPU_BS::%llu\n",Cpu_BatchSize );
 
   if(RunLevel==1){
     CPU_startTime();
@@ -177,32 +181,37 @@ void swap_mac_address(GPUMbuf **packetStream, uint64_t size){
     CPU_endTime();
     cpu_time=diff(timers.cpu_lo1,timers.cpu_hi1,timers.cpu_lo2,timers.cpu_hi2);
   }
-  else{
+  else if(RunLevel==3){
     CPU_startTime();
     pthread_t my_thread2;
-    if(RunLevel==3){
-      pthread_struct pthread_Args2;
-      pthread_Args2.packetStream=packetStream;
-      pthread_Args2.size=Cpu_BatchSize;
-     
-      pthread_create(&my_thread2, NULL, cpu_nf_caller_call, &pthread_Args2); 
-    }
+    pthread_struct pthread_Args2;
+    pthread_Args2.packetStream=packetStream;
+    pthread_Args2.size=Cpu_BatchSize;
+   
+    pthread_create(&my_thread2, NULL, cpu_nf_caller_call, &pthread_Args2); 
     
 
-    
+    if(size>Cpu_BatchSize)
+      GPU_BatchSize=size-Cpu_BatchSize;
+    else
+      GPU_BatchSize=0;
+
+    printf("GPU_BS::%llu\n",GPU_BatchSize );
+
     GPU_Tot_startTime();
     GPU_startTime();
-    for(int i=Cpu_BatchSize;i<size;i++){
-        GPUMbuf mbuf=*(packetStream[i]);
+    for(int i=0;i<GPU_BatchSize;i++){
+        GPUMbuf mbuf=*(packetStream[i+Cpu_BatchSize]);
         uint8_t* buf=mbuf.buf_addr+mbuf.data_off;
         memcpy((uint8_t*)&hst_hdrs[i],buf,sizeof(packet_hdrs));
     }
+    size_t GPUSize=GPU_BatchSize*sizeof(packet_hdrs);
     GPU_endTime();
     if(timeIO)
       printf("CPU Copy time::%llu\n", diff(timers.gpu_lo1,timers.gpu_hi1,timers.gpu_lo2,timers.gpu_hi2));
       
     GPU_startTime();
-    err = cudaMemcpy(dev_hdrs, hst_hdrs,size_dev_hdrs, cudaMemcpyHostToDevice);
+    err = cudaMemcpy(dev_hdrs, hst_hdrs,GPUSize, cudaMemcpyHostToDevice);
     if (err != cudaSuccess)
     {
         fprintf(stderr, "Failed to copy to GPU device (error code %s)!\n", cudaGetErrorString(err));
@@ -214,7 +223,9 @@ void swap_mac_address(GPUMbuf **packetStream, uint64_t size){
       printf("GPU Copy time::%llu\n", diff(timers.gpu_lo1,timers.gpu_hi1,timers.gpu_lo2,timers.gpu_hi2));
 
     GPU_startTime();
-    gpu_kernel_call(dev_hdrs, size-Cpu_BatchSize);  
+    
+
+    gpu_kernel_call(dev_hdrs, GPU_BatchSize);  
     err=cudaDeviceSynchronize();
     err = cudaGetLastError();
     if (err != cudaSuccess){
@@ -226,7 +237,7 @@ void swap_mac_address(GPUMbuf **packetStream, uint64_t size){
       printf("GPU Run time::%llu\n", diff(timers.gpu_lo1,timers.gpu_hi1,timers.gpu_lo2,timers.gpu_hi2));
     
     GPU_startTime();
-    err = cudaMemcpy(hst_hdrs, dev_hdrs, size_dev_hdrs, cudaMemcpyDeviceToHost);
+    err = cudaMemcpy(hst_hdrs, dev_hdrs, GPUSize, cudaMemcpyDeviceToHost);
     if (err != cudaSuccess){
          fprintf(stderr, "Failed to copy vectorC from device to host (error code %s)!\n", cudaGetErrorString(err));
         exit(EXIT_FAILURE);
@@ -237,8 +248,8 @@ void swap_mac_address(GPUMbuf **packetStream, uint64_t size){
       printf("GPU copy back time::%llu\n", diff(timers.gpu_lo1,timers.gpu_hi1,timers.gpu_lo2,timers.gpu_hi2));
 
     GPU_startTime();
-    for(int i=0;i<size;i++){
-        GPUMbuf mbuf=*(packetStream[i]);
+    for(int i=0;i<GPU_BatchSize;i++){
+        GPUMbuf mbuf=*(packetStream[i+Cpu_BatchSize]);
         uint8_t* buf=mbuf.buf_addr+mbuf.data_off;
         // memcpy((uint8_t*)&hst_hdrs[i],buf,sizeof(packet_hdrs));
         memcpy(buf,(uint8_t*)&hst_hdrs[i],sizeof(packet_hdrs));
@@ -247,17 +258,88 @@ void swap_mac_address(GPUMbuf **packetStream, uint64_t size){
     if(timeIO)
       printf("CPU Copy back time::%llu\n", diff(timers.gpu_lo1,timers.gpu_hi1,timers.gpu_lo2,timers.gpu_hi2));
     GPU_Tot_endTime();
-    if(RunLevel==3)
-      pthread_join(my_thread2, NULL);
+    pthread_join(my_thread2, NULL);
     CPU_endTime();
     hyb_time=diff(timers.cpu_lo1,timers.cpu_hi1,timers.cpu_lo2,timers.cpu_hi2);
 
     gpu_time=diff(timers.gpu_mem_lo1,timers.gpu_mem_hi1,timers.gpu_mem_lo2,timers.gpu_mem_hi2);
-    printf("GPU::%llu\n", gpu_time);
-    printf("CPU::%llu\n",cpu_time );
-    printf("HYB::%llu,\n",hyb_time);
-
   }
+  else{
+    if(size>Cpu_BatchSize)
+      GPU_BatchSize=size-Cpu_BatchSize;
+    else
+      GPU_BatchSize=0;
+
+    printf("GPU_BS::%llu\n",GPU_BatchSize );
+
+    GPU_Tot_startTime();
+    GPU_startTime();
+    for(int i=0;i<GPU_BatchSize;i++){
+        GPUMbuf mbuf=*(packetStream[i+Cpu_BatchSize]);
+        uint8_t* buf=mbuf.buf_addr+mbuf.data_off;
+        memcpy((uint8_t*)&hst_hdrs[i],buf,sizeof(packet_hdrs));
+    }
+    size_t GPUSize=GPU_BatchSize*sizeof(packet_hdrs);
+    GPU_endTime();
+    if(timeIO)
+      printf("CPU Copy time::%llu\n", diff(timers.gpu_lo1,timers.gpu_hi1,timers.gpu_lo2,timers.gpu_hi2));
+      
+    GPU_startTime();
+    err = cudaMemcpy(dev_hdrs, hst_hdrs,GPUSize, cudaMemcpyHostToDevice);
+    if (err != cudaSuccess)
+    {
+        fprintf(stderr, "Failed to copy to GPU device (error code %s)!\n", cudaGetErrorString(err));
+        exit(EXIT_FAILURE);
+    }
+    GPU_endTime();
+
+    if(timeIO)
+      printf("GPU Copy time::%llu\n", diff(timers.gpu_lo1,timers.gpu_hi1,timers.gpu_lo2,timers.gpu_hi2));
+
+    GPU_startTime();
+    
+
+    gpu_kernel_call(dev_hdrs, GPU_BatchSize);  
+    err=cudaDeviceSynchronize();
+    err = cudaGetLastError();
+    if (err != cudaSuccess){
+        fprintf(stderr, "Failed to launch mac_swap_kernel kernel (error code %s)!\n", cudaGetErrorString(err));
+        exit(EXIT_FAILURE);
+    }
+    GPU_endTime();
+    if(timeIO)
+      printf("GPU Run time::%llu\n", diff(timers.gpu_lo1,timers.gpu_hi1,timers.gpu_lo2,timers.gpu_hi2));
+    
+    GPU_startTime();
+    err = cudaMemcpy(hst_hdrs, dev_hdrs, GPUSize, cudaMemcpyDeviceToHost);
+    if (err != cudaSuccess){
+         fprintf(stderr, "Failed to copy vectorC from device to host (error code %s)!\n", cudaGetErrorString(err));
+        exit(EXIT_FAILURE);
+    }
+      // cudaFree(dev_hdrs);
+    GPU_endTime();
+    if(timeIO)
+      printf("GPU copy back time::%llu\n", diff(timers.gpu_lo1,timers.gpu_hi1,timers.gpu_lo2,timers.gpu_hi2));
+
+    GPU_startTime();
+    for(int i=0;i<GPU_BatchSize;i++){
+        GPUMbuf mbuf=*(packetStream[i+Cpu_BatchSize]);
+        uint8_t* buf=mbuf.buf_addr+mbuf.data_off;
+        // memcpy((uint8_t*)&hst_hdrs[i],buf,sizeof(packet_hdrs));
+        memcpy(buf,(uint8_t*)&hst_hdrs[i],sizeof(packet_hdrs));
+    }
+    GPU_endTime();
+    if(timeIO)
+      printf("CPU Copy back time::%llu\n", diff(timers.gpu_lo1,timers.gpu_hi1,timers.gpu_lo2,timers.gpu_hi2));
+    GPU_Tot_endTime();
+    CPU_endTime();
+    hyb_time=diff(timers.cpu_lo1,timers.cpu_hi1,timers.cpu_lo2,timers.cpu_hi2);
+
+    gpu_time=diff(timers.gpu_mem_lo1,timers.gpu_mem_hi1,timers.gpu_mem_lo2,timers.gpu_mem_hi2);
+  }
+  printf("GPU::%llu\n", gpu_time);
+  printf("CPU::%llu\n",cpu_time );
+  printf("HYB::%llu,\n",hyb_time);
   
 }
 
